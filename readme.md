@@ -227,15 +227,59 @@ $
 
 Now that we have modelled our system as well as the measurements coming into it we are ready to plug in our values into the kalman filter.
 
+The algorithm consists of 2 main steps:
+
 ### Prediction step
 
-we can predict the 
+We can predict the state of the system as well as the noise as given below.
 
 <center>
 
-$X_{n+1} = AX_n + BU$
+$X_{t+1} = AX_t + BU$
 
-$P_{n+1} = APA^{-1} + Q$
+$P_{t+1} = AP_tA^{-1} + Q$
+
+</center>
+
+### Kalman Gain (K)
+
+Now we calculate the kalman gain <img src="https://render.githubusercontent.com/render/math?math=K">. This value simply represents the proportion in which we should use our measurements versus our prediction to estimate our next state.
+
+<center>
+
+$K = \frac{P_tC}{CP_tC+R}$
+
+</center>
+
+The general intution for kalman gain is as the equation below. Higher the noise in measurements the less we trust the external measurements w.r.t our predicted state hence lower the gain.
+
+<center>
+
+$K = \frac{\text{System Noise (P)}}{\text{System Noise (P)} + \text{Measurement Noise (R)} }$
+
+</center>
+
+### Correction step
+
+Here we update our system state using our predections and measurements.
+
+<center>
+
+$X_{t+1} = X_{t+1} + K[Y_{t+1} - CX_{t+1}]$
+
+</center>
+
+All the step above does is to correct the value we had at predict state using the kalman gain value we calculated
+
+Put simply as the `weighted average` of `measurement` and `prediction`.
+
+<center>
+
+$X_{corrected} = X_{predicted} + K(X_{measured} - X_{predicted})$
+
+or
+
+$X_{corrected} = K.X_{measured} + (1-K) X_{predicted}$
 
 </center>
 
