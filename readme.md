@@ -6,7 +6,7 @@ To design a kalman filter for an object moving on a 2D plane with 3 degrees of f
 
 ## The motion model
 
-The following [equations of motion](https://en.wikipedia.org/wiki/Equations_of_motion) describe the motion of the object with acceptable accuracy (neglecting the higher order differentials of the approximation like jerk i.e. the derivative of acceleration).
+The following [equations of motion](https://en.wikipedia.org/wiki/Equations_of_motion) describe the motion of the object with acceptable accuracy (neglecting the higher order differentials of the approximation like jerk (literally!) i.e. the derivative of acceleration).
 
 the position of the object in unit time (t+1) given the velocity and acceleration can be predicted as...
 
@@ -166,7 +166,7 @@ $
 here we model our measurement devices (eg: GPS, imu) to update the state of our system. the meaurement equation can be written as. 
 <center>
 
-$Y_{n+1} = H X_{n+1} + V$
+$Y_{t+1} = H X_{t+1} + V$
 
 </center>
 
@@ -277,7 +277,7 @@ Put simply as the `weighted average` of `measurement` and `prediction`.
 
 $X_{corrected} = X_{predicted} + K(X_{measured} - X_{predicted})$
 
-or
+OR
 
 $X_{corrected} = K.X_{measured} + (1-K) X_{predicted}$
 

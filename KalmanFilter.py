@@ -8,35 +8,32 @@ import logging as log
 import numpy as np
 
 
-class Kalman2D:
-    def __init__(self, state_0, p_diag, q_diag, r_diag, dt=1):
-        """ Create Kalman model from initial parameters​        
+class KalmanFilter:
+    def __init__(self, state_0, accel_0, p_diag, q_diag, r_diag, dt=1):
+        """ Kalman filter model from initial parameters​        
         Args:   
-        state_0: size 6 mat [pos-x, pos-y, width, height, velocity-x, velocity-y]
-        p_diag: size 6 mat of process covariance
-        q_diag: size 4 mat of acceleration covariance (rough estimate) [x-cov, y-cov, x_vel-cov, y_vel-cov]
-        r_diag: size 4 mat of measurement covariance (sensor noise) [x-cov, y-cov, w-cov, h-cov]
+        state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
+        accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
+        p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
+        q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
+        r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] (used as defalut)
         """
-        #state matrix
-        self.X = state_0.T  # [x, y, x', y']
+        # state space model
+        self.X = state_0.T  # [x, y, t, x', y', t']
         self.A = np.eye(6)
-        self.A[([0, 1], [4, 5])] = dt
+        self.A[[0, 1, 2], [3, 4, 5]] = dt  # discrete time constant
 
-        ##assuming constant velocity, hence U = [ax, ay] = 0, B*U = 0
+        self.B = np.vstack((0.5*dt**2*np.eye(3), dt*np.eye(3)))
+        self.U = accel_0.T #acceleration
+        
         #initial variance
         self.P = np.diagflat(p_diag)
 
         #Process noise
         q_diag = np.diagflat(q_diag)
-        G = np.matrix([[0.5*dt**2,         0, 0, 0],
-                       [0,         0.5*dt**2, 0, 0],
-                       [0,                 0, 1, 0],
-                       [0,                 0, 0, 1],
-                       [dt,                0, 0, 0],
-                       [0,                dt, 0, 0]])
-
+        
         #process noise
-        self.Q = G * q_diag * G.T
+        self.Q = B * q_diag * B.T
 
         #transform matrix, we use only position and width, height estimates hence
         self.H46 = np.matrix([[1, 0, 0, 0, 0, 0],
