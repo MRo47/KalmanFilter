@@ -247,7 +247,17 @@ Now we calculate the kalman gain <img src="https://render.githubusercontent.com/
 
 <center>
 
-$K = \frac{P_tC}{CP_tC+R}$
+$K = \frac{P_tH}{HP_tH+R}$
+
+</center>
+
+The denominator for this equation <img src="https://render.githubusercontent.com/render/math?math=HP_tH+R"> is also known as the innovation and is denoted as <img src="https://render.githubusercontent.com/render/math?math=I"> hence the equation can be written as.
+
+<center>
+
+$K = P_tHI^{-1}$
+
+$I = HP_tH+R$
 
 </center>
 
@@ -265,7 +275,7 @@ Here we update our system state using our predections and measurements.
 
 <center>
 
-$X_{t+1} = X_{t+1} + K[Y_{t+1} - CX_{t+1}]$
+$X_{t+1} = X_{t+1} + K[Y_{t+1} - HX_{t+1}]$
 
 </center>
 

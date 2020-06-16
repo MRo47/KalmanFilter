@@ -35,11 +35,10 @@ class KalmanFilter:
         #process noise
         self.Q = B * q_diag * B.T
 
-        #transform matrix, we use only position and width, height estimates hence
-        self.H46 = np.matrix([[1, 0, 0, 0, 0, 0],
-                              [0, 1, 0, 0, 0, 0],
-                              [0, 0, 1, 0, 0, 0],
-                              [0, 0, 0, 1, 0, 0]])
+        #transform matrix, we measure only positon hence
+        self.H = np.matrix([[1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0],
+                            [0, 0, 1, 0, 0, 0]])
 
         #measurement noise
         self.R = np.diagflat(r_diag)
@@ -51,114 +50,124 @@ class KalmanFilter:
                 f'A (Dynamics matrix) :\n {self.A} \n\n' +
                 f'P (Noise Covariance matrix):\n {self.P} \n\n' +
                 f'Q (Process Covariance matrix):\n {self.Q} \n\n' +
-                f'H (Translation matrix):\n {self.H46} \n\n' +
+                f'H (Translation matrix):\n {self.H} \n\n' +
                 f'R (Measurement noise matrix):\n {self.R} \n\n')
 
     def measurement_valid(self, meas):
-        ''' check if measurement (Box) is None or if any value is np.nan '''
+        ''' check if a measurement is valid '''
         return meas is not None and not np.isnan(meas).any()
 
     def predict(self):
         ''' predict step of kalman filter '''
         ###################prediction stage#############################################
-        #assuming a constant velocity model B*U = 0 as no acceleration
-        self.X = self.A * self.X  # predict the new state
+        
+        self.X = self.A * self.X + self.B * self.U # predict the new state
 
         self.P = self.A * self.P * self.A.T + self.Q  # predict the current covariance
         #asssuming no relation in errors
-        self.P = np.diag(np.diag(self.P))
-        # self.P *= np.eye(len(self.P))
+        # self.P = np.diag(np.diag(self.P))
+
         log.info('Process Covariance after predict step:\n%s', self.P)
 
         return np.array(self.X[:4]).flatten()
 
     def update(self, meas, r_diag=None):
-        ''' update step of kalman filter '''
-        ###############Kalman Gain Calculation##########################################
-        I = self.H46 * self.P * self.H46.T + self.R  # Innovation Covariance
+        ''' update step of kalman filter 
+        args:
+        meas: position measurement, array like of dims 1X3 (x, y, t)
+        r_diag: (optional) measurement covariance of dims 1x3
+        '''
+        self.R = r_diag * np.identity(3) if r_diag is not None else self.R
 
-        K = self.P * self.H46.T * I.I  # Kalman gain
+        ###############Kalman Gain Calculation##########################################
+        I = self.H * self.P * self.H.T + self.R  # Innovation
+
+        K = self.P * self.H.T * I.I  # Kalman gain
 
         ###############Update step######################################################
         # new observation only position , width and height xywh (1x4).T = 4x1
         Y = np.matrix(meas).T
 
-        self.X = self.X + K * (Y - self.H46 * self.X)  # new state estimate
-        ##update process covar matrix
-        self.P = (np.identity(6) - K * self.H46) * \
-            self.P  # new covariance matrix
+        self.X = self.X + K * (Y - self.H * self.X)  # new state estimate
+        
+        # update the process covariance
+        self.P = (np.identity(6) - K * self.H) * self.P  # new covariance matrix
 
-        return np.array(self.X[:4]).flatten()
+        return np.array(self.X).flatten()
 
     def step_update(self, meas, r_diag=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
-        if r_diag is not None:  # if measurement noise given
-            self.R = np.identity(4) * r_diag.T  # else keep original input
+
+        # keep original input if noise not given
+        self.R = r_diag * np.identity(3) if r_diag is not None else self.R
 
         self.predict()
 
         if not self.measurement_valid(meas):  # when no measurement input
             # return after prediction only
-            return np.array(self.X[:4]).flatten()
+            return np.array(self.X).flatten()
 
         return self.update(meas, r_diag=None)
 
-    def get_box(self):
-        ''' return box coordinates np.array([x, y, w, h])'''
-        return np.array(self.X[:4]).flatten()  # x, y, w, h
-
     def get_state(self):
-        ''' return box coordinates and velocities np.array([x, y, w, h, x_vel, y_vel])'''
+        ''' return box coordinates and velocities np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
         return np.array(self.X).flatten()
-
-    def get_vel(self):
-        ''' return box velocity only np.array([x_vel, y_vel])'''
-        return np.array(self.X[-2:]).flatten()
 
 
 def main():
     ''' test kalman filter '''
     import matplotlib.pyplot as plt
-    import datagen as dg
+    import DataGen as dg
 
-    fig = plt.figure(figsize=(20, 20))
-    ax = plt.axes()
+    fig = plt.figure(figsize=(10, 10))
+    plt.style.use("ggplot")
+    plt.xticks(np.arange(0, 110, 10))
+    plt.yticks(np.arange(0, 110, 10))
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
+    ax = plt.axes()
+    (x, y, t), (x_m, y_m, t_m) = dg.get_data()
+    #plot data
+    dg.plot_data(plt, x, y, t, 'True', c=['#a6e4ff', 'grey'])
+    dg.plot_data(plt, x_m, y_m, t_m, 'Measured', c=['blue', 'black'])
 
-    #Data input
-    missing_data_ids = [15, 16, 17]
-    data = dg.get_box_data(ax, min_x=3, max_x=103, num=20, power=1.4,
-                           width=11, height=30, dev=[2, 2, 10, 10],
-                           missing_data=missing_data_ids)
+    state_0 = np.matrix([x_m[0], y_m[0], t_m[0], ])
 
-    print(data)
+    # #Data input
+    # missing_data_ids = [15, 16, 17]
+    # data = dg.get_box_data(ax, min_x=3, max_x=103, num=20, power=1.4,
+    #                        width=11, height=30, dev=[2, 2, 10, 10],
+    #                        missing_data=missing_data_ids)
 
-    p_diag = np.matrix([2, 2, 5, 5, 16, 16])  # [x, y, x', y'] variance (noise)
-    q_diag = np.matrix(1e-6 * np.ones(4))  # process noise
-    # [x, y, x', y'] measurement noise
-    r_diag = np.matrix([4, 4, 100, 100])
+    # print(data)
 
-    state_0 = np.matrix([data[0][0], data[0][1], data[0][2], data[0][3],
-                         data[0][0], 1.4*data[0][1]])
-    KF = Kalman2D(state_0, p_diag, q_diag, r_diag, dt=1)
+    # p_diag = np.matrix([2, 2, 5, 5, 16, 16])  # [x, y, x', y'] variance (noise)
+    # q_diag = np.matrix(1e-6 * np.ones(4))  # process noise
+    # # [x, y, x', y'] measurement noise
+    # r_diag = np.matrix([4, 4, 100, 100])
 
-    X_op = []
-    Y_op = []
-    W_op = []
-    H_op = []
-    for xywhv in data[1:]:
-        new_state = KF.step_update(xywhv)
-        temp_x = new_state.tolist()
-        X_op.append(temp_x[0])
-        Y_op.append(temp_x[1])
-        W_op.append(temp_x[2])
-        H_op.append(temp_x[3])
+    # state_0 = np.matrix([data[0][0], data[0][1], data[0][2], data[0][3],
+    #                      data[0][0], 1.4*data[0][1]])
+    # KF = Kalman2D(state_0, p_diag, q_diag, r_diag, dt=1)
 
-    ax.scatter(X_op, Y_op, c='g', label='Filtered')
-    for xi, yi, wi, hi in zip(X_op, Y_op, W_op, H_op):
-        dg.draw_box(ax, xi, yi, wi, hi, color='g')
+    # X_op = []
+    # Y_op = []
+    # W_op = []
+    # H_op = []
+    # for xywhv in data[1:]:
+    #     new_state = KF.step_update(xywhv)
+    #     temp_x = new_state.tolist()
+    #     X_op.append(temp_x[0])
+    #     Y_op.append(temp_x[1])
+    #     W_op.append(temp_x[2])
+    #     H_op.append(temp_x[3])
+
+    # ax.scatter(X_op, Y_op, c='g', label='Filtered')
+    # for xi, yi, wi, hi in zip(X_op, Y_op, W_op, H_op):
+    #     dg.draw_box(ax, xi, yi, wi, hi, color='g')
+    
     ax.legend()
+    ax.set_aspect('equal')
     plt.show()
 
 
