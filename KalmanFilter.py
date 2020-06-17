@@ -126,12 +126,19 @@ def main():
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     ax = plt.axes()
-    (x, y, t), (x_m, y_m, t_m) = dg.get_data()
+
+    pos_dev = [1, 1, 0.01]
+    acc_dev = [0.1, 0.1, 0.01]
+
+    (x,y,t), (x_m, y_m, t_m), (x_a, y_a, t_a) = dg.get_data(num=50, dev=pos_dev, acc_dev=acc_dev)
     #plot data
     dg.plot_data(plt, x, y, t, 'True', c=['#a6e4ff', 'grey'])
     dg.plot_data(plt, x_m, y_m, t_m, 'Measured', c=['blue', 'black'])
 
-    state_0 = np.matrix([x_m[0], y_m[0], t_m[0], ])
+    state_0 = np.matrix([x_m[0], y_m[0], t_m[0], 2, -2, 0.2])
+    accel_0 = np.matrix([1,1,0.1])
+    p_diag = np.matrix([5, 5, 5, 25, 25, 25])
+    q_diag = np.matrix(1e-6 * np.ones(6))
 
     # #Data input
     # missing_data_ids = [15, 16, 17]

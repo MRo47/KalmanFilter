@@ -8,18 +8,24 @@ def plot_data(plt, x, y, t, label, c=['#a6e4ff', 'grey']):
     plt.scatter(x, y, color=c[0], label=label)
 
 def ideal_data(min_x=0, max_x=100, num=20,
-               coeffs=[-0.02, 2, 1]):
+               coeffs=[25, 0.1, 10, 30]):
     x = np.linspace(min_x, max_x, num)
-    y = coeffs[0] * x**2 + coeffs[1] * x + coeffs[2]
+    # y = coeffs[0] * x**2 + coeffs[1] * x + coeffs[2] #[-0.02, 2, 1]
+    y = coeffs[0] * np.sin(coeffs[1]*x + coeffs[2]) + coeffs[3]
     # get diff between now and next point
     x_diff = np.diff(x)
     y_diff = np.diff(y)
+
     t = np.arctan2(y_diff, x_diff)
+
+    print('x diff\n', x_diff)
+    print('y diff\n', y_diff)
+    print('t diff\n', np.diff(t))
 
     return x, y, t
 
 def get_data(min_x=0, max_x=100, num=20,
-             coeffs=[-0.02, 2, 1], dev=[2, 2, 0.01],
+             coeffs=[25, 0.1, 10, 30], dev=[2, 2, 0.01], acc_dev=[0.1, 0.1, 0.01],
              missing_data=[]):
     """
     generate data
@@ -36,16 +42,30 @@ def get_data(min_x=0, max_x=100, num=20,
         numpy.array(x, y, w, h) of dimensions num*4
     """
     #true values
-    x, y, t = ideal_data(min_x=min_x, max_x=max_x, num=num+1,
+    x, y, t = ideal_data(min_x=min_x, max_x=max_x, num=num+2,
                          coeffs=coeffs)
                          
     #noisy data
     np.random.seed(seed=1168271) #randomly chosen, keep as the data looks good ;-)
-    x_ip = x + np.random.normal(loc=0, scale=dev[0], size=num+1)
-    y_ip = y + np.random.normal(loc=0, scale=dev[1], size=num+1)
+    x_ip = x + np.random.normal(loc=0, scale=dev[0], size=num+2)
+    y_ip = y + np.random.normal(loc=0, scale=dev[1], size=num+2)
 
-    t_ip = np.arctan2(np.diff(y_ip), np.diff(x_ip))
-    t_ip = t_ip + np.random.normal(loc=0, scale=dev[2], size=num)
+    x_ip_acc = np.diff(np.diff(x_ip)) + \
+        np.random.normal(loc=0, scale=acc_dev[0], size=num)
+    y_ip_acc = np.diff(np.diff(y_ip)) + \
+        np.random.normal(loc=0, scale=acc_dev[1], size=num)
+
+    t_ip = t + np.random.normal(loc=0, scale=dev[2], size=num+1)
+
+    t_ip_acc = np.diff(t_ip) + \
+        np.random.normal(loc=0, scale=acc_dev[2], size=num)
+
+    print("X acc\n", x_ip_acc)
+    print("Y acc\n", y_ip_acc)
+    print("T acc\n", t_ip_acc)
+
+    plt.plot(x[2:], t_ip_acc)
+    plt.show()
 
     #missing data
     for idx in missing_data:
@@ -53,7 +73,7 @@ def get_data(min_x=0, max_x=100, num=20,
         y_ip[idx] = np.NaN
         t_ip[idx] = np.NaN
 
-    return (x[:-1],y[:-1],t), (x_ip[:-1], y_ip[:-1], t_ip)
+    return (x[:-2], y[:-2], t[:-1]), (x_ip[:-2], y_ip[:-2], t_ip[:-1]), (x_ip_acc, y_ip_acc, t_ip_acc)
 
 
 if __name__ == '__main__':
@@ -64,11 +84,14 @@ if __name__ == '__main__':
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     ax = plt.axes()
-    (x,y,t), (x_m, y_m, t_m) = get_data()
+    (x,y,t), (x_m, y_m, t_m), (x_a, y_a, t_a) = get_data(num=50, dev=[1,1,0.01])
     #plot data
     plot_data(plt, x, y, t, 'True', c=['#a6e4ff', 'grey'])
     plot_data(plt, x_m, y_m, t_m, 'Measured', c=['blue', 'black'])
 
+    print(x.shape)
+    print(y.shape)
+    print(t.shape)
     # print(d4)
     ax.legend()
     ax.set_aspect('equal')
