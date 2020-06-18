@@ -9,7 +9,7 @@ import numpy as np
 
 
 class KalmanFilter:
-    def __init__(self, state_0, accel_0, p_diag, q_diag, r_diag, dt=1):
+    def __init__(self, state_0, p_diag, q_diag, r_diag, dt=1):
         """ Kalman filter model from initial parameters​        
         Args:   
         state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
@@ -25,10 +25,9 @@ class KalmanFilter:
         print('A: \n', self.A)
 
         self.B = np.vstack((0.5*dt**2*np.eye(3), dt*np.eye(3)))
+        # self.U = accel_0.T  # acceleration 0 for constant velocity model
         print('B: \n', self.B)
-        self.U = accel_0.T #acceleration
-        print('U: \n', self.U)
-        
+
         #initial variance
         self.P = np.diagflat(p_diag)
         print('P: \n', self.P)
@@ -36,7 +35,7 @@ class KalmanFilter:
         #Process noise
         q_diag = np.diagflat(q_diag)
         print('q_diag: \n', q_diag)
-        
+
         #process noise
         self.Q = self.B * q_diag * self.B.T
         print('Q: \n', self.Q)
@@ -64,21 +63,13 @@ class KalmanFilter:
         ''' check if a measurement is valid '''
         return meas is not None and not np.isnan(meas).any()
 
-    def predict(self, accel_in):
-        ''' predict step of kalman filter 
-        accel_in: 3x1 matrix of acceleration
-        '''
+    def predict(self):
+        ''' predict step of kalman filter '''
         ###################prediction stage#############################################
-        accel_in = np.matrix(accel_in)
-        print('accel in: \n', accel_in)
 
-        self.X = self.A * self.X + self.B * accel_in.T # predict the new state
-
-        print('X predicted: \n', self.X)
+        self.X = self.A * self.X  # predict the new state
 
         self.P = self.A * self.P * self.A.T + self.Q  # predict the current covariance
-
-        print('P predicted: \n', self.P)
         #asssuming no relation in errors
         # self.P = np.diag(np.diag(self.P))
 
@@ -104,19 +95,20 @@ class KalmanFilter:
         Y = np.matrix(meas).T
 
         self.X = self.X + K * (Y - self.H * self.X)  # new state estimate
-        
+
         # update the process covariance
-        self.P = (np.identity(6) - K * self.H) * self.P  # new covariance matrix
+        self.P = (np.identity(6) - K * self.H) * \
+            self.P  # new covariance matrix
 
         return np.array(self.X).flatten()
 
-    def step_update(self, meas, accel_in, r_diag=None):
+    def step_update(self, meas, r_diag=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
 
         # keep original input if noise not given
         self.R = r_diag * np.identity(3) if r_diag is not None else self.R
 
-        self.predict(accel_in)
+        self.predict()
 
         if not self.measurement_valid(meas):  # when no measurement input
             # return after prediction only
@@ -146,41 +138,35 @@ def main():
     acc_dev = [0.1, 0.1, 0.01]
 
     xyt_true, xyt_measured, xyt_accel = dg.get_data(
-        coeffs=[25, 0.08, 50, 30], num=50, dev=pos_dev, acc_dev=acc_dev)
-    #plot data
+        coeffs=[25, 0.08, 50, 30] ,num=50, dev=pos_dev, acc_dev=acc_dev)
     #plot data
     plt.plot(xyt_true[0], xyt_true[1], color='#a6e4ff')
     dg.plot_data(plt, xyt_true[0], xyt_true[1],
-                 xyt_true[2], 'True', c=['#a6e4ff', 'grey'])
+              xyt_true[2], 'True', c=['#a6e4ff', 'grey'])
     plt.plot(xyt_measured[0], xyt_measured[1], color='blue')
     dg.plot_data(plt, xyt_measured[0], xyt_measured[1],
-                 xyt_measured[2], 'Measured', c=['blue', 'black'])
+              xyt_measured[2], 'Measured', c=['blue', 'black'])
 
+    # print(xyt_measured[:, 0])
     state_0 = np.matrix([xyt_measured[0][0], xyt_measured[0][1],
                          xyt_measured[0][2], 2, -2, 0.2])
-    accel_0 = np.matrix(xyt_accel[:, 0])
     p_diag = np.matrix([5, 5, 5, 25, 25, 25])
     q_diag = np.matrix(1e-2 * np.ones(3))
-    r_diag = pos_dev  # meausurement noise
+    r_diag = pos_dev #meausurement noise
 
-    filter_obj = KalmanFilter(state_0, accel_0, p_diag, q_diag, r_diag, dt=1)
+    filter_obj = KalmanFilter(state_0, p_diag, q_diag, r_diag, dt=1)
 
     op = [filter_obj.get_state()]
-    for xyt_m, xyt_acc in zip(xyt_measured[:, 1:].T, xyt_accel[:, 1:].T):  # for all meausrements except first
-        # print('xytm shape ', xyt_m.shape)
-        # print('xyt acc ', xyt_acc.shape)
-        op_val = filter_obj.step_update(xyt_m, xyt_acc)
-        # print('op: ', op_val)
-        op.append(op_val)
+    for xyt_m in xyt_measured[:,1:].T: #for all meausrements except first
+        op.append(filter_obj.step_update(xyt_m))
         # break
-
+    
     op = np.array(op)
 
     print('op ', op.shape)
     plt.plot(op[:, 0], op[:, 1])
-    dg.plot_data(plt, op[:, 0], op[:, 1], op[:, 2],
-                 label='predicted', c=['red', 'black'])
-    
+    dg.plot_data(plt, op[:,0], op[:,1], op[:,2], label='predicted', c=['red', 'black'])
+
     ax.legend()
     ax.set_aspect('equal')
     plt.show()

@@ -11,6 +11,7 @@ def ideal_data(min_x=0, max_x=100, num=20,
                coeffs=[25, 0.1, 10, 30]):
     x = np.linspace(min_x, max_x, num)
     # y = coeffs[0] * x**2 + coeffs[1] * x + coeffs[2] #[-0.02, 2, 1]
+    # y = -0.02 * x**2 + 2 * x + 1
     y = coeffs[0] * np.sin(coeffs[1]*x + coeffs[2]) + coeffs[3]
     # get diff between now and next point
     x_diff = np.diff(x)
@@ -64,8 +65,8 @@ def get_data(min_x=0, max_x=100, num=20,
     print("Y acc\n", y_ip_acc)
     print("T acc\n", t_ip_acc)
 
-    plt.plot(x[2:], t_ip_acc)
-    plt.show()
+    # plt.plot(x[2:], t_ip_acc)
+    # plt.show()
 
     #missing data
     for idx in missing_data:
@@ -73,7 +74,10 @@ def get_data(min_x=0, max_x=100, num=20,
         y_ip[idx] = np.NaN
         t_ip[idx] = np.NaN
 
-    return (x[:-2], y[:-2], t[:-1]), (x_ip[:-2], y_ip[:-2], t_ip[:-1]), (x_ip_acc, y_ip_acc, t_ip_acc)
+    print('Data')
+    print()
+
+    return np.vstack((x[:-2], y[:-2], t[:-1])), np.vstack((x_ip[:-2], y_ip[:-2], t_ip[:-1])), np.vstack((x_ip_acc, y_ip_acc, t_ip_acc))
 
 
 if __name__ == '__main__':
@@ -84,14 +88,18 @@ if __name__ == '__main__':
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     ax = plt.axes()
-    (x,y,t), (x_m, y_m, t_m), (x_a, y_a, t_a) = get_data(num=50, dev=[1,1,0.01])
-    #plot data
-    plot_data(plt, x, y, t, 'True', c=['#a6e4ff', 'grey'])
-    plot_data(plt, x_m, y_m, t_m, 'Measured', c=['blue', 'black'])
+    xyt_true, xyt_measured, xyt_accel = get_data(num=50, dev=[1,1,0.01])
 
-    print(x.shape)
-    print(y.shape)
-    print(t.shape)
+    print(xyt_true[:,1:].shape)
+    print(xyt_true[0].shape)
+    print(xyt_true[1].shape)
+    print(xyt_true[2].shape)
+
+    #plot data
+    plot_data(plt, xyt_true[0], xyt_true[1], xyt_true[2], 'True', c=['#a6e4ff', 'grey'])
+    plot_data(plt, xyt_measured[0], xyt_measured[1], xyt_measured[2], 'Measured', c=['blue', 'black'])
+
+    
     # print(d4)
     ax.legend()
     ax.set_aspect('equal')
