@@ -134,7 +134,7 @@ def main():
     plt.ylabel('Y-axis')
     ax = plt.axes()
 
-    pos_dev = [2, 2, 0.01]
+    pos_dev = [2, 2, 0.05]
     acc_dev = [0.1, 0.1, 0.01]
 
     xyt_true, xyt_measured, xyt_accel = dg.get_data(

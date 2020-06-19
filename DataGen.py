@@ -47,7 +47,7 @@ def get_data(min_x=0, max_x=100, num=20,
                          coeffs=coeffs)
                          
     #noisy data
-    np.random.seed(seed=1168271) #randomly chosen, keep as the data looks good ;-)
+    np.random.seed(seed=1168273) #randomly chosen, keep as the data looks good ;-)
     x_ip = x + np.random.normal(loc=0, scale=dev[0], size=num+2)
     y_ip = y + np.random.normal(loc=0, scale=dev[1], size=num+2)
 
