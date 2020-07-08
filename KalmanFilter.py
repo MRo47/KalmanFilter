@@ -1,7 +1,10 @@
 """
-Kalman2D module
-this module is a kalman filter implementation for a constant velocity model of a box with,
-filtering on box dimensions and box center position
+Kalman Filter module
+this module is a kalman filter implementation
+of a robot moving in 2D space with 3 degrees of freedom x, y 
+and rotation around z (theta)
+
+the available measurements are position and imu data (acceleration)
 """
 
 import logging as log
@@ -16,7 +19,9 @@ class KalmanFilter:
         accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
         p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
         q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
-        r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] (used as defalut)
+        r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
+        
+        measurement noise r_diag is used as default, unless noise estimate is available at update for every point
         """
         # state space model
         self.X = state_0.T  # [x, y, t, x', y', t']
@@ -29,24 +34,24 @@ class KalmanFilter:
         self.U = accel_0.T #acceleration
         print('U: \n', self.U)
         
-        #initial variance
+        # initial variance
         self.P = np.diagflat(p_diag)
         print('P: \n', self.P)
 
-        #Process noise
+        # Process noise
         q_diag = np.diagflat(q_diag)
         print('q_diag: \n', q_diag)
         
-        #process noise
+        # Process noise matrix
         self.Q = self.B * q_diag * self.B.T
         print('Q: \n', self.Q)
 
-        #transform matrix, we measure only positon hence
+        # transform matrix, we measure only positon hence
         self.H = np.matrix([[1, 0, 0, 0, 0, 0],
                             [0, 1, 0, 0, 0, 0],
                             [0, 0, 1, 0, 0, 0]])
 
-        #measurement noise
+        # measurement noise
         self.R = np.diagflat(r_diag)
         print('R: \n', self.R)
 
@@ -65,18 +70,20 @@ class KalmanFilter:
         return meas is not None and not np.isnan(meas).any()
 
     def predict(self, accel_in):
-        ''' predict step of kalman filter 
-        accel_in: 3x1 matrix of acceleration
-        '''
+        """ predict step of kalman filter 
+        accel_in: 3x1 matrix of acceleration data (imu)
+        """
         ###################prediction stage#############################################
         accel_in = np.matrix(accel_in)
         print('accel in: \n', accel_in)
 
-        self.X = self.A * self.X + self.B * accel_in.T # predict the new state
+        # predict the new state
+        self.X = self.A * self.X + self.B * accel_in.T 
 
         print('X predicted: \n', self.X)
 
-        self.P = self.A * self.P * self.A.T + self.Q  # predict the current covariance
+        # predict the current covariance
+        self.P = self.A * self.P * self.A.T + self.Q 
 
         print('P predicted: \n', self.P)
         #asssuming no relation in errors
@@ -159,7 +166,7 @@ def main():
     state_0 = np.matrix([xyt_measured[0][0], xyt_measured[0][1],
                          xyt_measured[0][2], 2, -2, 0.2])
     accel_0 = np.matrix(xyt_accel[:, 0])
-    p_diag = np.matrix([5, 5, 5, 25, 25, 25])
+    p_diag = np.matrix([100, 100, 100, 600, 600, 600])
     q_diag = np.matrix(1e-2 * np.ones(3))
     r_diag = pos_dev  # meausurement noise
 

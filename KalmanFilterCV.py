@@ -1,7 +1,10 @@
 """
-Kalman2D module
-this module is a kalman filter implementation for a constant velocity model of a box with,
-filtering on box dimensions and box center position
+Kalman Filter module
+this module is a kalman filter implementation for a constant velocity model 
+of a robot moving in 2D space with 3 degrees of freedom x, y 
+and rotation around z (theta)
+
+the only available measurement is the robot position in unit timestamp
 """
 
 import logging as log
@@ -16,7 +19,9 @@ class KalmanFilter:
         accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
         p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
         q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
-        r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] (used as defalut)
+        r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
+        
+        measurement noise r_diag is used as default, unless noise estimate is available at update for every point
         """
         # state space model
         self.X = state_0.T  # [x, y, t, x', y', t']
@@ -28,24 +33,25 @@ class KalmanFilter:
         # self.U = accel_0.T  # acceleration 0 for constant velocity model
         print('B: \n', self.B)
 
-        #initial variance
+        # initial variance
         self.P = np.diagflat(p_diag)
         print('P: \n', self.P)
 
-        #Process noise
+        # Process noise
         q_diag = np.diagflat(q_diag)
         print('q_diag: \n', q_diag)
 
-        #process noise
+        # Process noise matrix
         self.Q = self.B * q_diag * self.B.T
         print('Q: \n', self.Q)
 
-        #transform matrix, we measure only positon hence
+        # transform matrix, we measure only positon hence
+        # value of diagonal elements is 1 since meausred and state values are in same units
         self.H = np.matrix([[1, 0, 0, 0, 0, 0],
                             [0, 1, 0, 0, 0, 0],
                             [0, 0, 1, 0, 0, 0]])
 
-        #measurement noise
+        # measurement noise
         self.R = np.diagflat(r_diag)
         print('R: \n', self.R)
 
@@ -83,7 +89,7 @@ class KalmanFilter:
         meas: position measurement, array like of dims 1X3 (x, y, t)
         r_diag: (optional) measurement covariance of dims 1x3
         '''
-        self.R = r_diag * np.identity(3) if r_diag is not None else self.R
+        self.R = np.diagflat(r_diag) if r_diag is not None else self.R
 
         ###############Kalman Gain Calculation##########################################
         I = self.H * self.P * self.H.T + self.R  # Innovation
@@ -91,33 +97,38 @@ class KalmanFilter:
         K = self.P * self.H.T * I.I  # Kalman gain
 
         ###############Update step######################################################
-        # new observation only position , width and height xywh (1x4).T = 4x1
+        # new observation x,y,t(1x3).T = 3x1
         Y = np.matrix(meas).T
 
-        self.X = self.X + K * (Y - self.H * self.X)  # new state estimate
+        # new state estimate
+        self.X = self.X + K * (Y - self.H * self.X)  
 
         # update the process covariance
         self.P = (np.identity(6) - K * self.H) * \
             self.P  # new covariance matrix
 
+        # return updated state
         return np.array(self.X).flatten()
 
     def step_update(self, meas, r_diag=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
 
-        # keep original input if noise not given
-        self.R = r_diag * np.identity(3) if r_diag is not None else self.R
+        # keep original noise input if noise not given
+        self.R = np.diagflat(r_diag) if r_diag is not None else self.R
 
+        # run predict step on current data
         self.predict()
 
-        if not self.measurement_valid(meas):  # when no measurement input
+        # when no measurement input
+        if not self.measurement_valid(meas):  
             # return after prediction only
             return np.array(self.X).flatten()
-
+        
+        # update and return state
         return self.update(meas, r_diag=None)
 
     def get_state(self):
-        ''' return box coordinates and velocities np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
+        ''' return state as np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
         return np.array(self.X).flatten()
 
 
@@ -150,7 +161,7 @@ def main():
     # print(xyt_measured[:, 0])
     state_0 = np.matrix([xyt_measured[0][0], xyt_measured[0][1],
                          xyt_measured[0][2], 2, -2, 0.2])
-    p_diag = np.matrix([5, 5, 5, 25, 25, 25])
+    p_diag = np.matrix([100, 100, 100, 600, 600, 600])
     q_diag = np.matrix(1e-2 * np.ones(3))
     r_diag = pos_dev #meausurement noise
 
