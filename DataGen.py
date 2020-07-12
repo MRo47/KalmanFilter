@@ -109,7 +109,9 @@ def get_data(min_x=0, max_x=100, num=20,
     # remove last 2 points from data x, y as these points were added to compute acceleration
     # remove 1 point from t as t is computed from diff of x and y hence is 1 point short already
     # acceleration data is in correct dimension as it is based on second differentials of n+2 points
-    return np.vstack((x[:-2], y[:-2], t[:-1])), np.vstack((x_ip[:-2], y_ip[:-2], t_ip[:-1])), np.vstack((x_ip_acc, y_ip_acc, t_ip_acc))
+    return (np.vstack((x[:-2], y[:-2], t[:-1])), 
+            np.vstack((x_ip[:-2], y_ip[:-2], t_ip[:-1])),
+            np.vstack((x_ip_acc, y_ip_acc, t_ip_acc)))
 
 
 if __name__ == '__main__':
