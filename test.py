@@ -62,51 +62,52 @@ class Func:
     def __init__(self, coeffs=[25, 0.1, 10, 30]):
         """coeffs: [A, B, C, D]"""
         self.c = coeffs
+    
+    def x(self, t):
+        """ x = t """
+        return t**2
+    
+    def dnx_dtn(self, t, n):
+        """ nth order derivative of x function at t """
+        return derivative(self.x , t, n=n)
         
-    def value(self, x):
+    def y(self, t):
         """ A * sin( B * x + C ) + D """
         return (self.c[0] *
-                np.sin(self.c[1]*x + self.c[2]) +
+                np.sin(self.c[1]*t + self.c[2]) +
                 self.c[3])
 
-    def dy_dx(self, x):
-        """ A * B * cos( B * x + C ) """
-        return derivative(self.value, x)
-        # return (self.c[0] * self.c[1] *
-        #         np.cos(self.c[1] * x + self.c[2]))
+    def dny_dtn(self, t, n):
+        """ nth order derivative of y function at t """
+        return derivative(self.y, t, n=n)
 
-    def d2y_dx2(self, x):
-        """ - A * B^2 * sin( B * x + C) """
-        return derivative(self.value, x, n=2)
-        # return - (self.c[0] * self.c[1]**2 *
-        #           np.cos(self.c[1] * x + self.c[2]))
+    def theta(self, t):
+        """ """
+        return np.arctan2(self.dny_dtn(t, 1), self.dnx_dtn(t, 1))
 
-    def theta(self, x):
-        return np.arctan(self.dy_dx(x))
-
-    def dt_dx(self, x):
-        return derivative(self.theta, x)
-    
-    def d2t_dx2(self, x):
-        return derivative(self.theta, x, n=2)
+    def dntheta_dtn(self, t, n):
+        """ nth order derivative of theta function at x"""
+        return derivative(self.theta, t, n=n)
 
 
 class GenFunction:
     def __init__(self, coeffs=[25, 0.1, 10, 30], 
-                 min_x=0, max_x=100, num=20):
+                 min_t=0, max_t=100, num=20):
         self.func = Func(coeffs=coeffs)
-        self.min_x = min_x
-        self.max_x = max_x
+        self.min_t = min_t
+        self.max_t = max_t
         self.num = num
 
     def ideal_data(self):
 
-        for x in np.linspace(self.min_x, 
-                             self.max_x, 
+        for t in np.linspace(self.min_t, 
+                             self.max_t, 
                              self.num):
             # x is linear, will have constant velocity thus 0 acceleration
-            yield (x, self.func.value(x), self.func.theta(x),
-                   0, self.func.d2y_dx2(x), self.func.d2t_dx2(x))
+            yield (self.func.x(t), self.func.y(t), self.func.theta(t),
+                   self.func.dnx_dtn(t, 2), 
+                   self.func.dny_dtn(t, 2), 
+                   self.func.dntheta_dtn(t, 2))
 
     def noisy_data(self, dev=[2, 2, 0.01],
                    acc_dev=[0.1, 0.1, 0.01],
@@ -132,11 +133,13 @@ t_ = []
 
 for x, y, t, xa, ya, ta in gen.ideal_data():
     # print(x, y, t)
-    x_.append(xa)
-    y_.append(ya)
-    t_.append(ta)
+    x_.append(x)
+    y_.append(y)
+    t_.append(t)
 
-plt.plot(t_)
+plt.plot(x_, y_)
+# plt.plot(y_)
+# plt.plot(t_)
 # plot_data(plt, x_, y_, t_, 'ideal')
 
 plt.show()
