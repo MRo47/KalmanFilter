@@ -47,6 +47,7 @@
 ###############################################################
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.misc import derivative
 
 def plot_data(plt, x, y, t, label, c=['#a6e4ff', 'grey']):
     x_diff = np.cos(t)
@@ -55,26 +56,39 @@ def plot_data(plt, x, y, t, label, c=['#a6e4ff', 'grey']):
     plt.scatter(x, y, color=c[0], label=label)
 
 ##can be done with symbolics
+
+
 class Func:
     def __init__(self, coeffs=[25, 0.1, 10, 30]):
         """coeffs: [A, B, C, D]"""
         self.c = coeffs
-    
+        
     def value(self, x):
         """ A * sin( B * x + C ) + D """
         return (self.c[0] *
                 np.sin(self.c[1]*x + self.c[2]) +
                 self.c[3])
 
-    def d_dx(self, x):
+    def dy_dx(self, x):
         """ A * B * cos( B * x + C ) """
-        return (self.c[0] * self.c[1] *
-                np.cos(self.c[1] * x + self.c[2]))
+        return derivative(self.value, x)
+        # return (self.c[0] * self.c[1] *
+        #         np.cos(self.c[1] * x + self.c[2]))
 
-    def d2_d2x(self, x):
+    def d2y_dx2(self, x):
         """ - A * B^2 * sin( B * x + C) """
-        return - (self.c[0] * self.c[1]**2 *
-                  np.cos(self.c[1] * x + self.c[2]))
+        return derivative(self.value, x, n=2)
+        # return - (self.c[0] * self.c[1]**2 *
+        #           np.cos(self.c[1] * x + self.c[2]))
+
+    def theta(self, x):
+        return np.arctan(self.dy_dx(x))
+
+    def dt_dx(self, x):
+        return derivative(self.theta, x)
+    
+    def d2t_dx2(self, x):
+        return derivative(self.theta, x, n=2)
 
 
 class GenFunction:
@@ -86,18 +100,13 @@ class GenFunction:
         self.num = num
 
     def ideal_data(self):
-        # prev_x = 0
-        # prev_y = 0
 
         for x in np.linspace(self.min_x, 
                              self.max_x, 
                              self.num):
-            y = self.func.value(x)
-            # t = np.arctan2(y-prev_y, x-prev_x)
-            t = np.arctan(self.func.d_dx(x))
-            # prev_x = x
-            # prev_y = y
-            yield x, y, t
+            # x is linear, will have constant velocity thus 0 acceleration
+            yield (x, self.func.value(x), self.func.theta(x),
+                   0, self.func.d2y_dx2(x), self.func.d2t_dx2(x))
 
     def noisy_data(self, dev=[2, 2, 0.01],
                    acc_dev=[0.1, 0.1, 0.01],
@@ -106,88 +115,31 @@ class GenFunction:
         # randomly chosen, keep as the data looks good ;-)
         np.random.seed(seed=1168273)
 
-        for x, y, t in self.ideal_data():
-            x_ip = x + np.random.normal(loc=0, scale=dev[0])
-            y_ip = y + np.random.normal(loc=0, scale=dev[1])
-            t_ip = t + np.random.normal(loc=0, scale=dev[2])
-
-            x_ip_acc = self.func.d2_d2x(
-                x_ip) + np.random.normal(loc=0, scale=acc_dev[0])
-            y_ip_acc = self.func.d2_d2x(
-                y_ip) + np.random.normal(loc=0, scale=acc_dev[1])
-            t_ip_acc = self.func.d2_d2x(
-                t_ip) + np.random.normal(loc=0, scale=acc_dev[2])
+        for x, y, t, x_acc, y_acc, t_acc in self.ideal_data():        
+            yield (np.random.normal(loc=x, scale=dev[0]),
+                   np.random.normal(loc=y, scale=dev[1]),
+                   np.random.normal(loc=t, scale=dev[2]),
+                   np.random.normal(loc=x_acc, scale=acc_dev[0]),
+                   np.random.normal(loc=y_acc, scale=acc_dev[1]),
+                   np.random.normal(loc=t_acc, scale=acc_dev[2]))
             
-            # if i in missing_data:
-            #     yield None, None, None
-            # else:
-            yield x_ip, y_ip, t_ip
-                #    np.array((x_ip, y_ip, t_ip)), \
-                #    np.array((x_ip_acc, y_ip_acc, t_ip_acc))
 
-gen = GenFunction()
+gen = GenFunction(num=100)
 
 x_ = []
 y_ = []
 t_ = []
 
-for x, y, t in gen.noisy_data():
+for x, y, t, xa, ya, ta in gen.ideal_data():
     # print(x, y, t)
-    x_.append(x)
-    y_.append(y)
-    t_.append(t)
+    x_.append(xa)
+    y_.append(ya)
+    t_.append(ta)
 
-plot_data(plt, x_, y_, t_, 'ideal')
+plt.plot(t_)
+# plot_data(plt, x_, y_, t_, 'ideal')
 
 plt.show()
 
-# print('\n')
-
-# for x, y, t in gen.noisy_data():
-#     print(x, y, t)
-
-# def ideal_data(min_x=0, max_x=100, num=20,
-#                coeffs=[25, 0.1, 10, 30]):
-
-#     func = Func(coeffs)
-#     prev_x = 0
-#     prev_y = 0
-
-#     for x in np.linspace(min_x, max_x, num):
-#         y = func.value(x)
-#         t = np.arctan2(y-prev_y, x-prev_x)
-#         prev_x = x
-#         prev_y = y
-#         yield x, y, t
-
-
-
-
-
-# def noisy_data(min_x=0, max_x=100, num=20,
-#                coeffs=[25, 0.1, 10, 30], 
-#                dev=[2, 2, 0.01], 
-#                acc_dev=[0.1, 0.1, 0.01],
-#                missing_data=[]):
-    
-#     # randomly chosen, keep as the data looks good ;-)
-#     np.random.seed(seed=1168273)
-
-#     func = Func(coeffs)
-
-#     for x, y, t in ideal_data(min_x=min_x, max_x=max_x,
-#                               num=num, coeffs=coeffs):
-#         x_ip = x + np.random.normal(loc=0, scale=dev[0])
-#         y_ip = y + np.random.normal(loc=0, scale=dev[1])
-#         t_ip = t + np.random.normal(loc=0, scale=dev[2])
-
-#         x_ip_acc = func.d2_d2x(
-#             x_ip) + np.random.normal(loc=0, scale=acc_dev[0])
-#         y_ip_acc = func.d2_d2x(
-#             y_ip) + np.random.normal(loc=0, scale=acc_dev[1])
-#         t_ip_acc = func.d2_d2x(
-#             t_ip) + np.random.normal(loc=0, scale=acc_dev[2])
-
-        
 
 
