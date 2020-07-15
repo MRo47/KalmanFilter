@@ -52,8 +52,18 @@ from scipy.misc import derivative
 def plot_data(plt, x, y, t, label, c=['#a6e4ff', 'grey']):
     x_diff = np.cos(t)
     y_diff = np.sin(t)
-    plt.quiver(x, y, x_diff, y_diff, color=c[1], width=0.003)
-    plt.scatter(x, y, color=c[0], label=label)
+    return (plt.quiver(x, y, x_diff, y_diff, color=c[1], width=0.003),
+            plt.scatter(x, y, color=c[0], label=label))
+
+
+def plot_quiver(plt, x, y, t, c='grey'):
+    x_diff = np.cos(t)
+    y_diff = np.sin(t)
+    return plt.quiver(x, y, x_diff, y_diff, color=c[1], width=0.003)
+
+
+def plot_point(plt, x, y, label, c='#a6e4ff'):
+    return plt.scatter(x, y, color=c[0], label=label)
 
 ##can be done with symbolics
 
@@ -127,30 +137,57 @@ class GenFunction:
 
 gen = GenFunction(num=100)
 
-x_ = []
-y_ = []
-t_ = []
+from matplotlib.animation import FuncAnimation
 
-for x, y, t, xa, ya, ta in gen.ideal_data():
-    # print(x, y, t)
-    x_.append(x)
-    y_.append(y)
-    t_.append(t)
+fig, ax = plt.subplots()
+xdata, ydata, tdata = [], [], []
+lnq, = plot_quiver(plt, [], [], [])
+lns, = plot_point(plt, [], [], 'ideal')
 
-plt.gca().set_aspect('equal', adjustable='box')
-plot_data(plt, x_, y_, t_, 'ideal')
+def init():
+    ax.set_xlim(-5, 105)
+    ax.set_ylim(-5, 65)
+    return lnq,lns,
 
-x_ = []
-y_ = []
-t_ = []
 
-for x, y, t, xa, ya, ta in gen.noisy_data():
-    # print(x, y, t)
-    x_.append(x)
-    y_.append(y)
-    t_.append(t)
+def update(frame):
+    x, y, t, xa, ya, ta = gen.ideal_data()
+    xdata.append(x)
+    ydata.append(y)
+    tdata.append(t)
+    lnq.set_data(xdata, ydata, tdata)
+    lns.set_data(xdata, ydata)
+    return lnq,lns,
 
-plot_data(plt, x_, y_, t_, 'measured', c=['blue', 'black'])
+
+ani = FuncAnimation(fig, update, frames=np.linspace(0, 100),
+                    init_func=init, blit=True)
+plt.show()
+
+# x_ = []
+# y_ = []
+# t_ = []
+
+# for x, y, t, xa, ya, ta in gen.ideal_data():
+#     # print(x, y, t)
+#     x_.append(x)
+#     y_.append(y)
+#     t_.append(t)
+
+# plt.gca().set_aspect('equal', adjustable='box')
+# plot_data(plt, x_, y_, t_, 'ideal')
+
+# x_ = []
+# y_ = []
+# t_ = []
+
+# for x, y, t, xa, ya, ta in gen.noisy_data():
+#     # print(x, y, t)
+#     x_.append(x)
+#     y_.append(y)
+#     t_.append(t)
+
+# plot_data(plt, x_, y_, t_, 'measured', c=['blue', 'black'])
 
 plt.show()
 
