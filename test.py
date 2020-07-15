@@ -65,7 +65,7 @@ class Func:
     
     def x(self, t):
         """ x = t """
-        return t**2
+        return t
     
     def dnx_dtn(self, t, n):
         """ nth order derivative of x function at t """
@@ -137,10 +137,20 @@ for x, y, t, xa, ya, ta in gen.ideal_data():
     y_.append(y)
     t_.append(t)
 
-plt.plot(x_, y_)
-# plt.plot(y_)
-# plt.plot(t_)
-# plot_data(plt, x_, y_, t_, 'ideal')
+plt.gca().set_aspect('equal', adjustable='box')
+plot_data(plt, x_, y_, t_, 'ideal')
+
+x_ = []
+y_ = []
+t_ = []
+
+for x, y, t, xa, ya, ta in gen.noisy_data():
+    # print(x, y, t)
+    x_.append(x)
+    y_.append(y)
+    t_.append(t)
+
+plot_data(plt, x_, y_, t_, 'measured', c=['blue', 'black'])
 
 plt.show()
 
