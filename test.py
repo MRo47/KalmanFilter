@@ -133,81 +133,38 @@ class GenFunction:
                    np.random.normal(loc=x_acc, scale=acc_dev[0]),
                    np.random.normal(loc=y_acc, scale=acc_dev[1]),
                    np.random.normal(loc=t_acc, scale=acc_dev[2]))
-            
 
-gen = GenFunction(num=100)
+def main():
+    total_iters = 100
+    animation_interval_ms = 100
 
-from matplotlib.animation import FuncAnimation
+    gen = GenFunction(num=total_iters)
 
-fig = plt.figure()
-ax1 = fig.add_subplot(1,1,1)
+    data_f = gen.noisy_data()
 
-def animate(i):
+    from matplotlib.animation import FuncAnimation
 
-    x_ = []
-    y_ = []
-    t_ = []
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
 
-    x, y, t, xa, ya, ta = next(gen.ideal_data())
-    x_.append(x)
-    y_.append(y)
-    t_.append(t)
-    print(i)
-    plot_data(ax1, x_, y_, t_, 'ideal')
+    def animate(i):
 
-ani = FuncAnimation(fig, animate, interval=100)
-plt.show()
+        x_ = []
+        y_ = []
+        t_ = []
 
-# ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
+        x, y, t, xa, ya, ta = next(data_f)
+        x_.append(x)
+        y_.append(y)
+        t_.append(t)
+        plot_data(ax1, x_, y_, t_, 'ideal')
 
-# qplt, = ax.quiver([], [], [], [], color='grey', width=0.003)
-# pplt, = ax.scatter([], [], color='#a6e4ff', label='ideal')
+    ani = FuncAnimation(fig, animate, interval=animation_interval_ms,
+                        frames=range(0,total_iters), repeat=False)
+    plt.show()
 
-# def init():
-#     qplt.set_data([],[])
-#     pplt.set_data([],[])
-#     return qplt, pplt,
-
-# def update(frame):
-#     x, y, t, xa, ya, ta = gen.ideal_data()
-#     xdata.append(x)
-#     ydata.append(y)
-#     tdata.append(t)
-#     lnq.set_data(xdata, ydata, tdata)
-#     lns.set_data(xdata, ydata)
-#     return lnq,lns,
-
-
-# ani = FuncAnimation(fig, update, frames=np.linspace(0, 100),
-#                     init_func=init, blit=True)
-# plt.show()
-
-# x_ = []
-# y_ = []
-# t_ = []
-
-# for x, y, t, xa, ya, ta in gen.ideal_data():
-#     # print(x, y, t)
-#     x_.append(x)
-#     y_.append(y)
-#     t_.append(t)
-
-# plt.gca().set_aspect('equal', adjustable='box')
-# plot_data(plt, x_, y_, t_, 'ideal')
-
-# x_ = []
-# y_ = []
-# t_ = []
-
-# for x, y, t, xa, ya, ta in gen.noisy_data():
-#     # print(x, y, t)
-#     x_.append(x)
-#     y_.append(y)
-#     t_.append(t)
-
-# plot_data(plt, x_, y_, t_, 'measured', c=['blue', 'black'])
-
-# plt.show()
-
+if __name__ == '__main__':
+    main()
 
 
