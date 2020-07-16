@@ -139,30 +139,48 @@ gen = GenFunction(num=100)
 
 from matplotlib.animation import FuncAnimation
 
-fig, ax = plt.subplots()
-xdata, ydata, tdata = [], [], []
-lnq, = plot_quiver(plt, [], [], [])
-lns, = plot_point(plt, [], [], 'ideal')
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
 
-def init():
-    ax.set_xlim(-5, 105)
-    ax.set_ylim(-5, 65)
-    return lnq,lns,
+def animate(i):
 
+    x_ = []
+    y_ = []
+    t_ = []
 
-def update(frame):
-    x, y, t, xa, ya, ta = gen.ideal_data()
-    xdata.append(x)
-    ydata.append(y)
-    tdata.append(t)
-    lnq.set_data(xdata, ydata, tdata)
-    lns.set_data(xdata, ydata)
-    return lnq,lns,
+    x, y, t, xa, ya, ta = next(gen.ideal_data())
+    x_.append(x)
+    y_.append(y)
+    t_.append(t)
+    print(i)
+    plot_data(ax1, x_, y_, t_, 'ideal')
 
-
-ani = FuncAnimation(fig, update, frames=np.linspace(0, 100),
-                    init_func=init, blit=True)
+ani = FuncAnimation(fig, animate, interval=100)
 plt.show()
+
+# ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
+
+# qplt, = ax.quiver([], [], [], [], color='grey', width=0.003)
+# pplt, = ax.scatter([], [], color='#a6e4ff', label='ideal')
+
+# def init():
+#     qplt.set_data([],[])
+#     pplt.set_data([],[])
+#     return qplt, pplt,
+
+# def update(frame):
+#     x, y, t, xa, ya, ta = gen.ideal_data()
+#     xdata.append(x)
+#     ydata.append(y)
+#     tdata.append(t)
+#     lnq.set_data(xdata, ydata, tdata)
+#     lns.set_data(xdata, ydata)
+#     return lnq,lns,
+
+
+# ani = FuncAnimation(fig, update, frames=np.linspace(0, 100),
+#                     init_func=init, blit=True)
+# plt.show()
 
 # x_ = []
 # y_ = []
@@ -189,7 +207,7 @@ plt.show()
 
 # plot_data(plt, x_, y_, t_, 'measured', c=['blue', 'black'])
 
-plt.show()
+# plt.show()
 
 
 
