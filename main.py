@@ -2,48 +2,73 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+# from KalmanFilterCV import KalmanFilter
+from KalmanFilterCV import KalmanFilter
+import visual as vs
 import DataGen as dg
 
-def plot_data(plt, x, y, t, label, c=['#a6e4ff', 'grey']):
-    x_diff = np.cos(t)
-    y_diff = np.sin(t)
-    plt.quiver(x, y, x_diff, y_diff, color=c[1], width=0.003)
-    plt.scatter(x, y, color=c[0], label=label)
-
-fig, ax = plt.subplots()
-x_true, y_true = [], []
-x_measured, y_measured = [], []
-x_filtered, y_filtered = [], []
-ln_true, = plt.plot([], [], 'ro')
-ln_measured, = plt.plot([], [], 'ro')
-
+# total iterations for the simulation
+total_iters = 100
+# start and end time of simulation
+time_lims = [0,100]
+# animation display interval in milliseconds
+animation_interval_ms = 100
+# standard deviation of gaussian noise to be added in position
 pos_dev = [2, 2, 0.05]
+# standard deviation of gaussian noise to be added in acceleration
 acc_dev = [0.1, 0.1, 0.01]
-
-xyt_true, xyt_measured, xyt_accel = dg.get_data(
-    coeffs=[25, 0.08, 50, 30], num=50, dev=pos_dev, acc_dev=acc_dev)
-
-state_0 = np.matrix([xyt_measured[0][0], xyt_measured[0][1],
-                     xyt_measured[0][2], 2, -2, 0.2])
+# initial noise estimate in state (position, velocity)
 p_diag = np.matrix([100, 100, 100, 600, 600, 600])
+# noise in acceleration
 q_diag = np.matrix(1e-2 * np.ones(3))
-r_diag = pos_dev  # meausurement noise
-filter_obj = KalmanFilter(state_0, p_diag, q_diag, r_diag, dt=1)
+# meausurement noise
+r_diag = pos_dev
 
-def init():
-    ax.set_xlim(-5, 105)
-    ax.set_ylim(-5, 65)
+# plotter initialiser
+fig = plt.figure()
+ax1 = fig.add_subplot(1, 1, 1)
+ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
 
-    return ln,
+# discrete time step 
+dt = (time_lims[1] - time_lims[0]) / float(total_iters)
 
+# the path generator function
+gen = dg.PathGen(coeffs=[25, 0.1, 10, 30],
+                 min_t=time_lims[0], max_t=time_lims[1],
+                 num=total_iters)
 
-def update(frame):
-    xdata.append(frame)
-    ydata.append(np.sin(frame))
-    ln.set_data(xdata, ydata)
-    return ln,
+# gen function for ideal data
+ideal_data_f = gen.ideal_data()
+# gen function for noisy data
+noisy_data_f = gen.noisy_data(dev=pos_dev, acc_dev=acc_dev)
 
+# get the first frames and plot
+# x, y, q, xa, ya, qa
+i_dat = next(ideal_data_f)
+# xn, yn, qn, xn_a, yn_a, qn_a
+m_dat = next(noisy_data_f)
 
-ani = FuncAnimation(fig, update, frames=np.linspace(0, 2*np.pi, 128),
-                    init_func=init, blit=True)
+# initialise kalman filter
+kf = KalmanFilter(np.matrix([m_dat[0], m_dat[1], m_dat[2], 0, 0, 0]),
+                    p_diag, q_diag, r_diag)
+
+# current state of kalman filter = m_data input
+p_dat = kf.get_state()[:3]
+# plot initial state
+vs.plot(ax1, i_dat, m_dat, p_dat)
+# animate function fetches data and updates kalman filter
+def animate(i):    
+    global ax1, kf
+    # get ideal and measurement data
+    i_dat = next(ideal_data_f)
+    m_dat = next(noisy_data_f)
+    # update kalman filter
+    p_dat = kf.step_update(np.matrix(m_dat[:3]))[:3]
+    # plot data
+    vs.plot(ax1, i_dat, m_dat, p_dat)
+
+# the animator
+ani = FuncAnimation(fig, animate,
+                    interval=animation_interval_ms,
+                    frames=range(0, total_iters), repeat=False)
 plt.show()

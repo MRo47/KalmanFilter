@@ -15,11 +15,11 @@ class KalmanFilter:
     def __init__(self, state_0, accel_0, p_diag, q_diag, r_diag, dt=1):
         """ Kalman filter model from initial parameters​        
         Args:   
-        state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
-        accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
-        p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
-        q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
-        r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
+            state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
+            accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
+            p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
+            q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
+            r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
         
         measurement noise r_diag is used as default, unless noise estimate is available at update for every point
         """
@@ -136,62 +136,73 @@ class KalmanFilter:
         return np.array(self.X).flatten()
 
 
-def main():
-    ''' test kalman filter '''
-    import matplotlib.pyplot as plt
-    import DataGen as dg
+# def main():
+''' test kalman filter '''
+import DataGen as dg
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
-    fig = plt.figure(figsize=(10, 10))
-    plt.style.use("ggplot")
-    plt.xticks(np.arange(0, 110, 10))
-    plt.yticks(np.arange(0, 110, 10))
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    ax = plt.axes()
+total_iters = 100
+animation_interval_ms = 100
 
-    pos_dev = [2, 2, 0.05]
-    acc_dev = [0.1, 0.1, 0.01]
+gen = dg.PathGen(num=total_iters)
 
-    xyt_true, xyt_measured, xyt_accel = dg.get_data(
-        coeffs=[25, 0.08, 50, 30], num=50, dev=pos_dev, acc_dev=acc_dev)
-    #plot data
-    #plot data
-    plt.plot(xyt_true[0], xyt_true[1], color='#a6e4ff')
-    dg.plot_data(plt, xyt_true[0], xyt_true[1],
-                 xyt_true[2], 'True', c=['#a6e4ff', 'grey'])
-    plt.plot(xyt_measured[0], xyt_measured[1], color='blue')
-    dg.plot_data(plt, xyt_measured[0], xyt_measured[1],
-                 xyt_measured[2], 'Measured', c=['blue', 'black'])
+pos_dev = [2, 2, 0.05]
+acc_dev = [0.1, 0.1, 0.01]
 
-    state_0 = np.matrix([xyt_measured[0][0], xyt_measured[0][1],
-                         xyt_measured[0][2], 2, -2, 0.2])
-    accel_0 = np.matrix(xyt_accel[:, 0])
-    p_diag = np.matrix([100, 100, 100, 600, 600, 600])
-    q_diag = np.matrix(1e-2 * np.ones(3))
-    r_diag = pos_dev  # meausurement noise
+p_diag = np.matrix([100, 100, 100, 600, 600, 600])
+q_diag = np.matrix(1e-2 * np.ones(3))
+r_diag = pos_dev  # meausurement noise
 
-    filter_obj = KalmanFilter(state_0, accel_0, p_diag, q_diag, r_diag, dt=1)
+noisy_data_f = gen.noisy_data(dev=pos_dev, acc_dev=acc_dev)
+ideal_data_f = gen.ideal_data()
 
-    op = [filter_obj.get_state()]
-    for xyt_m, xyt_acc in zip(xyt_measured[:, 1:].T, xyt_accel[:, 1:].T):  # for all meausrements except first
-        # print('xytm shape ', xyt_m.shape)
-        # print('xyt acc ', xyt_acc.shape)
-        op_val = filter_obj.step_update(xyt_m, xyt_acc)
-        # print('op: ', op_val)
-        op.append(op_val)
-        # break
+# init kalman filter
+kf = None
 
-    op = np.array(op)
-
-    print('op ', op.shape)
-    plt.plot(op[:, 0], op[:, 1])
-    dg.plot_data(plt, op[:, 0], op[:, 1], op[:, 2],
-                 label='predicted', c=['red', 'black'])
-    
-    ax.legend()
-    ax.set_aspect('equal')
-    plt.show()
+fig = plt.figure()
+ax1 = fig.add_subplot(1, 1, 1)
+# ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
 
 
-if __name__ == '__main__':
-    main()
+def init():
+    global ax1, kf, p_diag, q_diag, r_diag
+
+    x, y, q, _, __, ___ = next(ideal_data_f)
+    xn, yn, qn, xa, ya, qa = next(noisy_data_f)
+
+    kf = KalmanFilter(np.matrix([xn, yn, qn, 2, -2, 0.2]),
+                    np.matrix([xa, ya, qa]),
+                    p_diag, q_diag, r_diag)
+    xp, yp, qp = kf.get_state()[:3]
+
+    dg.plot_data(ax1, x, y, q, 'ideal')
+    if xn is not None:
+        dg.plot_data(ax1, xn, yn, qn, 'noisy', c=['red', 'black'])
+    dg.plot_data(ax1, xp, yp, qp, 'predicted', c=['blue', 'black'])
+    print('init')
+
+
+def animate(i):
+    global ax1, kf
+
+    x, y, q, _, __, ___ = next(ideal_data_f)
+    xn, yn, qn, xa, ya, qa = next(noisy_data_f)
+
+    xp, yp, qp = kf.step_update(np.matrix([xn, yn, qn]),
+                                np.matrix([xa, ya, qa]))[:3]
+
+    dg.plot_data(ax1, x, y, q, 'ideal')
+    if xn is not None:
+        dg.plot_data(ax1, xn, yn, qn, 'noisy', c=['red', 'black'])
+    dg.plot_data(ax1, xp, yp, qp, 'predicted', c=['blue', 'black'])
+
+
+ani = FuncAnimation(fig, animate, init_func=init,
+                    interval=animation_interval_ms,
+                    frames=range(0, total_iters), repeat=False)
+plt.show()
+
+
+# if __name__ == '__main__':
+#     main()

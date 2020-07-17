@@ -80,16 +80,16 @@ class PathGen(PathFunc):
     def ideal_data(self):
         """ generator for ideal data
         Returns:
-            tuple: x, y, theta, d2x/d22, d2y/dt2, d2theta/dt2
+            np.matrix: [x, y, theta, d2x/d22, d2y/dt2, d2theta/dt2]
         """
         for t in np.linspace(self.min_t,
                              self.max_t,
                              self.num):
             # x is linear, will have constant velocity thus 0 acceleration
-            yield (self.x(t), self.y(t), self.theta(t),
-                   self.dnx_dtn(t, 2),
-                   self.dny_dtn(t, 2),
-                   self.dntheta_dtn(t, 2))
+            yield np.array([self.x(t), self.y(t), self.theta(t),
+                             self.dnx_dtn(t, 2),
+                             self.dny_dtn(t, 2),
+                             self.dntheta_dtn(t, 2)])
 
     def noisy_data(self, dev=[2, 2, 0.01],
                    acc_dev=[0.1, 0.1, 0.01],
@@ -107,20 +107,19 @@ class PathGen(PathFunc):
         # randomly chosen, keep as the data looks good ;-)
         np.random.seed(seed=1168273)
 
-        for i, (x, y, q, x_acc, y_acc, t_acc) in enumerate(self.ideal_data()):
+        for i, i_dat in enumerate(self.ideal_data()):
 
             if i in missing_data:
                 i += 1
-                yield None, None, None, None, None, None
+                yield None
             else:
                 i += 1
-                yield (np.random.normal(loc=x, scale=dev[0]),
-                       np.random.normal(loc=y, scale=dev[1]),
-                       np.random.normal(loc=q, scale=dev[2]),
-                       np.random.normal(loc=x_acc, scale=acc_dev[0]),
-                       np.random.normal(loc=y_acc, scale=acc_dev[1]),
-                       np.random.normal(loc=t_acc, scale=acc_dev[2]))
-
+                yield np.array([np.random.normal(loc=i_dat[0], scale=dev[0]),
+                                 np.random.normal(loc=i_dat[1], scale=dev[1]),
+                                 np.random.normal(loc=i_dat[2], scale=dev[2]),
+                                 np.random.normal(loc=i_dat[3], scale=acc_dev[0]),
+                                 np.random.normal(loc=i_dat[4], scale=acc_dev[1]),
+                                 np.random.normal(loc=i_dat[5], scale=acc_dev[2])])
 
 def main():
     total_iters = 100
@@ -139,12 +138,15 @@ def main():
     ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
 
     def animate(i):
-        x, y, q, xa, ya, ta = next(ideal_data_f)
-        xn, yn, qn, xa, ya, ta = next(noisy_data_f)
+        # x, y, q, xa, ya, ta
+        i_dat = next(ideal_data_f)
+        # xm, ym, qm, xm, ym, qm
+        m_dat = next(noisy_data_f)
 
-        plot_data(ax1, x, y, q, 'ideal')
-        if xn is not None:
-            plot_data(ax1, xn, yn, qn, 'noisy', c=['red', 'black'])
+        plot_data(ax1, i_dat[0], i_dat[1], i_dat[2], 'ideal')
+        if m_dat is not None:
+            plot_data(ax1, m_dat[0], m_dat[1], m_dat[2],
+                      'noisy', c=['red', 'black'])
 
     ani = FuncAnimation(fig, animate, interval=animation_interval_ms,
                         frames=range(0, total_iters), repeat=False)
