@@ -125,7 +125,8 @@ class KalmanFilter:
 
         self.predict(accel_in)
 
-        if not self.measurement_valid(meas):  # when no measurement input
+        # if no measurement input no update step is performed
+        if not self.measurement_valid(meas):
             # return after prediction only
             return np.array(self.X).flatten()
 
@@ -134,75 +135,3 @@ class KalmanFilter:
     def get_state(self):
         ''' return box coordinates and velocities np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
         return np.array(self.X).flatten()
-
-
-# def main():
-''' test kalman filter '''
-import DataGen as dg
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-
-total_iters = 100
-animation_interval_ms = 100
-
-gen = dg.PathGen(num=total_iters)
-
-pos_dev = [2, 2, 0.05]
-acc_dev = [0.1, 0.1, 0.01]
-
-p_diag = np.matrix([100, 100, 100, 600, 600, 600])
-q_diag = np.matrix(1e-2 * np.ones(3))
-r_diag = pos_dev  # meausurement noise
-
-noisy_data_f = gen.noisy_data(dev=pos_dev, acc_dev=acc_dev)
-ideal_data_f = gen.ideal_data()
-
-# init kalman filter
-kf = None
-
-fig = plt.figure()
-ax1 = fig.add_subplot(1, 1, 1)
-# ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 65))
-
-
-def init():
-    global ax1, kf, p_diag, q_diag, r_diag
-
-    x, y, q, _, __, ___ = next(ideal_data_f)
-    xn, yn, qn, xa, ya, qa = next(noisy_data_f)
-
-    kf = KalmanFilter(np.matrix([xn, yn, qn, 2, -2, 0.2]),
-                    np.matrix([xa, ya, qa]),
-                    p_diag, q_diag, r_diag)
-    xp, yp, qp = kf.get_state()[:3]
-
-    dg.plot_data(ax1, x, y, q, 'ideal')
-    if xn is not None:
-        dg.plot_data(ax1, xn, yn, qn, 'noisy', c=['red', 'black'])
-    dg.plot_data(ax1, xp, yp, qp, 'predicted', c=['blue', 'black'])
-    print('init')
-
-
-def animate(i):
-    global ax1, kf
-
-    x, y, q, _, __, ___ = next(ideal_data_f)
-    xn, yn, qn, xa, ya, qa = next(noisy_data_f)
-
-    xp, yp, qp = kf.step_update(np.matrix([xn, yn, qn]),
-                                np.matrix([xa, ya, qa]))[:3]
-
-    dg.plot_data(ax1, x, y, q, 'ideal')
-    if xn is not None:
-        dg.plot_data(ax1, xn, yn, qn, 'noisy', c=['red', 'black'])
-    dg.plot_data(ax1, xp, yp, qp, 'predicted', c=['blue', 'black'])
-
-
-ani = FuncAnimation(fig, animate, init_func=init,
-                    interval=animation_interval_ms,
-                    frames=range(0, total_iters), repeat=False)
-plt.show()
-
-
-# if __name__ == '__main__':
-#     main()

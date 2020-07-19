@@ -64,7 +64,7 @@ class PathGen(PathFunc):
         or noisy data (sensor measurements with gaussian noise) """
 
     def __init__(self, coeffs=[25, 0.1, 10, 30],
-                 min_t=0, max_t=100, num=20):
+                 min_t=0, max_t=100, num=20, rand_seed=1168273):
         """
         Args:
             coeffs (list[A,B,C,D]): for PathFunc() (default=[25, 0.1, 10, 30])
@@ -76,6 +76,8 @@ class PathGen(PathFunc):
         self.min_t = min_t
         self.max_t = max_t
         self.num = num
+        # randomly chosen, keep as the data looks good ;-)
+        np.random.seed(seed=rand_seed)
 
     def ideal_data(self):
         """ generator for ideal data
@@ -99,19 +101,22 @@ class PathGen(PathFunc):
             dev (list): std deviation of noise to be added
                         to position and orientation in [x,y,theta]
             acc_dev (list): std deviation of noise to be added
-                            to acceleration in [acc_x, acc_y, acc_theta] 
+                            to acceleration in [acc_x, acc_y, acc_theta]
+            missing_data (tuple): discrete time stamps at which np.nan value's
+                                  are returned (simulating missing sensor data) 
         
         Returns:
             tuple: x, y, theta, d2x/d22, d2y/dt2, d2theta/dt2 with noise
         """
-        # randomly chosen, keep as the data looks good ;-)
-        np.random.seed(seed=1168273)
 
         for i, i_dat in enumerate(self.ideal_data()):
 
             if i in missing_data:
                 i += 1
-                yield None
+                yield np.array([np.nan, np.nan, np.nan,
+                                np.random.normal(loc=i_dat[3], scale=acc_dev[0]),
+                                np.random.normal(loc=i_dat[4], scale=acc_dev[1]),
+                                np.random.normal(loc=i_dat[5], scale=acc_dev[2])])
             else:
                 i += 1
                 yield np.array([np.random.normal(loc=i_dat[0], scale=dev[0]),

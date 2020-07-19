@@ -11,7 +11,7 @@ import logging as log
 import numpy as np
 
 
-class KalmanFilter:
+class KalmanFilterCV:
     def __init__(self, state_0, p_diag, q_diag, r_diag, dt=1):
         """ Kalman filter model from initial parameters​        
         Args:   
@@ -118,7 +118,7 @@ class KalmanFilter:
         # run predict step on current data
         self.predict()
 
-        # when no measurement input
+        # if no measurement input no update step is performed
         if not self.measurement_valid(meas):  
             # return after prediction only
             return np.array(self.X).flatten()
@@ -129,58 +129,3 @@ class KalmanFilter:
     def get_state(self):
         ''' return state as np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
         return np.array(self.X).flatten()
-
-
-def main():
-    ''' test kalman filter '''
-    import matplotlib.pyplot as plt
-    import DataGen as dg
-
-    fig = plt.figure(figsize=(10, 10))
-    plt.style.use("ggplot")
-    plt.xticks(np.arange(0, 110, 10))
-    plt.yticks(np.arange(0, 110, 10))
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-    ax = plt.axes()
-
-    pos_dev = [2, 2, 0.05]
-    acc_dev = [0.1, 0.1, 0.01]
-
-    xyt_true, xyt_measured, xyt_accel = dg.get_data(
-        coeffs=[25, 0.08, 50, 30] ,num=50, dev=pos_dev, acc_dev=acc_dev)
-    #plot data
-    plt.plot(xyt_true[0], xyt_true[1], color='#a6e4ff')
-    dg.plot_data(plt, xyt_true[0], xyt_true[1],
-              xyt_true[2], 'True', c=['#a6e4ff', 'grey'])
-    plt.plot(xyt_measured[0], xyt_measured[1], color='blue')
-    dg.plot_data(plt, xyt_measured[0], xyt_measured[1],
-              xyt_measured[2], 'Measured', c=['blue', 'black'])
-
-    # print(xyt_measured[:, 0])
-    state_0 = np.matrix([xyt_measured[0][0], xyt_measured[0][1],
-                         xyt_measured[0][2], 2, -2, 0.2])
-    p_diag = np.matrix([100, 100, 100, 600, 600, 600])
-    q_diag = np.matrix(1e-2 * np.ones(3))
-    r_diag = pos_dev #meausurement noise
-
-    filter_obj = KalmanFilter(state_0, p_diag, q_diag, r_diag, dt=1)
-
-    op = [filter_obj.get_state()]
-    for xyt_m in xyt_measured[:,1:].T: #for all meausrements except first
-        op.append(filter_obj.step_update(xyt_m))
-        # break
-    
-    op = np.array(op)
-
-    print('op ', op.shape)
-    plt.plot(op[:, 0], op[:, 1])
-    dg.plot_data(plt, op[:,0], op[:,1], op[:,2], label='predicted', c=['red', 'black'])
-
-    ax.legend()
-    ax.set_aspect('equal')
-    plt.show()
-
-
-if __name__ == '__main__':
-    main()
