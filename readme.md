@@ -12,6 +12,20 @@ the position of the object in unit time (t+1) given the velocity and acceleratio
 
 <center>
 
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;
+\begin{*align*}
+x_{t+1} = x_t + t\dot{x}_t + \frac{t^2}{2}\ddot{x}_t \\
+y_{t+1} = y_t + t\dot{y}_t + \frac{t^2}{2}\ddot{y}_t \\
+\theta_{t+1} = \theta_t + t\dot{\theta}_t + \frac{t^2}{2}\ddot{\theta}_t \\
+\dot{x}_t = \frac{dx_t}{dt} = \text{Object velocity along x at time t} \\
+\ddot{x}_t = \frac{d^2x_t}{dt^2} = \text{Object acceleration along x at time t} \\
+\end{*align*}
+"/>
+
+<!-- <img src="https://latex.codecogs.com/svg.latex?\Large&space;
+
+"/> -->
+
 $x_{t+1} = x_t + t\dot{x}_t + \frac{t^2}{2}\ddot{x}_t$
 
 
@@ -45,6 +59,48 @@ $\dot{\theta}_{t+1} = \dot{\theta}_t + t\ddot{\theta}_{t}$
 The above motion equations can be represented as a state space equation as. Here our system state is the position (x, y, orientation or heading angle 0 if heading parallel to x axis) and velocity (linear along x and y, angular along z)
 
 <center>
+
+<img src="https://latex.codecogs.com/svg.latex?\Large&space;
+X_{n+1} = 
+\begin{bmatrix}
+x_{n+1} \\
+y_{n+1} \\
+\theta_{n+1} \\
+\dot{x}_{n+1} \\
+\dot{y}_{n+1} \\
+\dot{\theta}_{n+1}
+\end{bmatrix} =
+\begin{bmatrix}
+1 & 0 & 0 & t & 0 & 0 \\
+0 & 1 & 0 & 0 & t & 0 \\
+0 & 0 & 1 & 0 & 0 & t \\
+0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1
+\end{bmatrix}
+\begin{bmatrix}
+x_{n} \\
+y_{n} \\
+\theta_{n} \\
+\dot{x}_{n} \\
+\dot{y}_{n} \\
+\dot{\theta}_{n}
+\end{bmatrix}
++
+\begin{bmatrix}
+\frac{t^2}{2} & 0 & 0 \\
+0 & \frac{t^2}{2} & 0 \\
+0 & 0 & \frac{t^2}{2} \\
+t & 0 & 0 \\
+0 & t & 0 \\
+0 & 0 & t
+\end{bmatrix}
+\begin{bmatrix}
+\ddot{x}_n \\
+\ddot{y}_n \\
+\ddot{\theta}_n
+\end{bmatrix}
+"/>
 
 $
 X_{n+1} = 
