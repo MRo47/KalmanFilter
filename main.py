@@ -2,10 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-import visual as vis
-import DataGen as dg
-from KalmanFilterCV import KalmanFilterCV
-from KalmanFilter import KalmanFilter
+import modules.data_gen as dg
+import modules.visual as vis
+from models.kalman_filter_cv import KalmanFilterCV
+from models.kalman_filter import KalmanFilter
 
 # total iterations for the simulation
 total_iters = 100
