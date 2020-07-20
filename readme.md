@@ -13,13 +13,11 @@ the position of the object in unit time (t+1) given the velocity and acceleratio
 <center>
 
 <img src="https://latex.codecogs.com/svg.latex?\Large&space;
-\begin{*align*}
-x_{t+1} = x_t + t\dot{x}_t + \frac{t^2}{2}\ddot{x}_t \\
-y_{t+1} = y_t + t\dot{y}_t + \frac{t^2}{2}\ddot{y}_t \\
-\theta_{t+1} = \theta_t + t\dot{\theta}_t + \frac{t^2}{2}\ddot{\theta}_t \\
-\dot{x}_t = \frac{dx_t}{dt} = \text{Object velocity along x at time t} \\
-\ddot{x}_t = \frac{d^2x_t}{dt^2} = \text{Object acceleration along x at time t} \\
-\end{*align*}
+\newline x_{t+1} = x_t + t\dot{x}_t + \frac{t^2}{2}\ddot{x}_t
+\newline y_{t+1} = y_t + t\dot{y}_t + \frac{t^2}{2}\ddot{y}_t
+\newline \theta_{t+1} = \theta_t + t\dot{\theta}_t + \frac{t^2}{2}\ddot{\theta}_t
+\newline \dot{x}_t = \frac{dx_t}{dt} = \text{Object velocity along x at time t}
+\newline \ddot{x}_t = \frac{d^2x_t}{dt^2} = \text{Object acceleration along x at time t}
 "/>
 
 <!-- <img src="https://latex.codecogs.com/svg.latex?\Large&space;
