@@ -88,6 +88,11 @@ class KalmanFilterCV:
         meas: position measurement, array like of dims 1X3 (x, y, t)
         r_diag: (optional) measurement covariance of dims 1x3
         '''
+        # if no measurement input no update step is performed
+        if not self.measurement_valid(meas):
+            # return current state
+            return np.array(self.X).flatten()
+
         self.R = np.diagflat(r_diag) if r_diag is not None else self.R
 
         ###############Kalman Gain Calculation##########################################
@@ -111,18 +116,13 @@ class KalmanFilterCV:
 
     def step_update(self, meas, r_diag=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
-
+        
         # keep original noise input if noise not given
         self.R = np.diagflat(r_diag) if r_diag is not None else self.R
 
         # run predict step on current data
         self.predict()
 
-        # if no measurement input no update step is performed
-        if not self.measurement_valid(meas):  
-            # return after prediction only
-            return np.array(self.X).flatten()
-        
         # update and return state
         return self.update(meas, r_diag=None)
 

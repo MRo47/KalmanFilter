@@ -78,7 +78,10 @@ class KalmanFilter:
         # print('accel in: \n', accel_in)
 
         # predict the new state
-        self.X = self.A * self.X + self.B * accel_in.T 
+        if self.measurement_valid(accel_in):
+            self.X = self.A * self.X + self.B * accel_in.T
+        else:
+            self.X = self.A * self.X  # predict the new state
         # print('X predicted: \n', self.X)
 
         # predict the current covariance
@@ -97,6 +100,11 @@ class KalmanFilter:
         meas: position measurement, array like of dims 1X3 (x, y, t)
         r_diag: (optional) measurement covariance of dims 1x3
         '''
+        # if no measurement input no update step is performed
+        if not self.measurement_valid(meas):
+            # return current state
+            return np.array(self.X).flatten()
+
         self.R = r_diag * np.identity(3) if r_diag is not None else self.R
 
         ###############Kalman Gain Calculation##########################################
@@ -118,15 +126,10 @@ class KalmanFilter:
     def step_update(self, meas, accel_in, r_diag=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
 
-        # keep original input if noise not given
+        # keep original noise input if noise not given
         self.R = r_diag * np.identity(3) if r_diag is not None else self.R
 
         self.predict(accel_in)
-
-        # if no measurement input no update step is performed
-        if not self.measurement_valid(meas):
-            # return after prediction only
-            return np.array(self.X).flatten()
 
         return self.update(meas, r_diag=None)
 
