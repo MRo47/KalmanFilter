@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_data(plt, xyq, label, c=['#a6e4ff', 'grey']):
+def plot_data(plt, xyq, label, c=['#a6e4ff', 'grey'], width=0.1):
     x_diff = np.cos(xyq[2])
     y_diff = np.sin(xyq[2])
-    plt.quiver(xyq[0], xyq[1], x_diff, y_diff, width=0.0025, color=c[1])
+   #  plt.quiver(xyq[0], xyq[1], x_diff, y_diff, width=0.0025, color=c[1])
+    plt.arrow(xyq[0], xyq[1], x_diff, y_diff, color=c[1], width=width)
     plt.scatter(xyq[0], xyq[1], color=c[0], label=label)
 
 
@@ -17,3 +18,4 @@ def plot(plt, ideal, measured, predicted,
             plot_data(plt, measured, label='measured', c=meas_c)
          if(predicted is not None):
             plot_data(plt, predicted, label='predicted', c=pred_c)
+

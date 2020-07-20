@@ -1,0 +1,5 @@
+numpy
+matplotlib
+ffmpeg
+jupyter nb
+scipy (misc.derivative)

@@ -95,15 +95,20 @@ class PathGen(PathFunc):
 
     def noisy_data(self, dev=[2, 2, 0.01],
                    acc_dev=[0.1, 0.1, 0.01],
-                   missing_data=()):
+                   missing_pos_data=(),
+                   missing_accel_data=()):
         """ generator for noisy data
         Args:
             dev (list): std deviation of noise to be added
                         to position and orientation in [x,y,theta]
             acc_dev (list): std deviation of noise to be added
                             to acceleration in [acc_x, acc_y, acc_theta]
-            missing_data (tuple): discrete time stamps at which np.nan value's
-                                  are returned (simulating missing sensor data) 
+            missing_pos_data (tuple): discrete time stamps at which np.nan value's
+                                      are returned for position
+                                      (simulating missing location sensor data)
+            missing_acc_data (tuple): discrete time stamps at which np.nan value's
+                                      are returned for acceleration
+                                      (simulating missing imu data)
         
         Returns:
             tuple: x, y, theta, d2x/d22, d2y/dt2, d2theta/dt2 with noise
@@ -111,20 +116,24 @@ class PathGen(PathFunc):
 
         for i, i_dat in enumerate(self.ideal_data()):
 
-            if i in missing_data:
-                i += 1
-                yield np.array([np.nan, np.nan, np.nan,
-                                np.random.normal(loc=i_dat[3], scale=acc_dev[0]),
-                                np.random.normal(loc=i_dat[4], scale=acc_dev[1]),
-                                np.random.normal(loc=i_dat[5], scale=acc_dev[2])])
-            else:
-                i += 1
-                yield np.array([np.random.normal(loc=i_dat[0], scale=dev[0]),
-                                 np.random.normal(loc=i_dat[1], scale=dev[1]),
-                                 np.random.normal(loc=i_dat[2], scale=dev[2]),
-                                 np.random.normal(loc=i_dat[3], scale=acc_dev[0]),
-                                 np.random.normal(loc=i_dat[4], scale=acc_dev[1]),
-                                 np.random.normal(loc=i_dat[5], scale=acc_dev[2])])
+            data = np.array([np.random.normal(loc=i_dat[0], scale=dev[0]),
+                             np.random.normal(loc=i_dat[1], scale=dev[1]),
+                             np.random.normal(loc=i_dat[2], scale=dev[2]),
+                             np.random.normal(loc=i_dat[3], scale=acc_dev[0]),
+                             np.random.normal(loc=i_dat[4], scale=acc_dev[1]),
+                             np.random.normal(loc=i_dat[5], scale=acc_dev[2])])
+
+            if i in missing_accel_data:
+                data[3] = np.nan
+                data[4] = np.nan
+                data[5] = np.nan
+            
+            if i in missing_pos_data:
+                data[0] = np.nan
+                data[1] = np.nan
+                data[2] = np.nan
+
+            yield data
 
 def main():
     total_iters = 100
@@ -132,7 +141,7 @@ def main():
 
     gen = PathGen(num=total_iters)
 
-    noisy_data_f = gen.noisy_data(missing_data=(
+    noisy_data_f = gen.noisy_data(missing_accel_data=(
         20, 21, 22, 23, 50, 51, 52, 53, 54, 55))
     ideal_data_f = gen.ideal_data()
 

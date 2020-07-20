@@ -75,17 +75,15 @@ class KalmanFilter:
         """
         ###################prediction stage#############################################
         accel_in = np.matrix(accel_in)
-        print('accel in: \n', accel_in)
+        # print('accel in: \n', accel_in)
 
         # predict the new state
         self.X = self.A * self.X + self.B * accel_in.T 
-
-        print('X predicted: \n', self.X)
+        # print('X predicted: \n', self.X)
 
         # predict the current covariance
         self.P = self.A * self.P * self.A.T + self.Q 
-
-        print('P predicted: \n', self.P)
+        # print('P predicted: \n', self.P)
         #asssuming no relation in errors
         # self.P = np.diag(np.diag(self.P))
 
