@@ -139,7 +139,7 @@ Now we calculate the kalman gain <img src="https://render.githubusercontent.com/
 
 </center>
 
-The denominator for this equation <img src="https://render.githubusercontent.com/render/math?math=HP_tH+R"> is also known as the innovation and is denoted as <img src="https://render.githubusercontent.com/render/math?math=I"> hence the equation can be written as.
+The denominator for this equation <img src="https://latex.codecogs.com/gif.latex?HP_tH&plus;R" title="HP_tH+R" /> is also known as the innovation and is denoted as <img src="https://render.githubusercontent.com/render/math?math=I"> hence the equation can be written as.
 
 <center>
   
