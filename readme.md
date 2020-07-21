@@ -2,7 +2,7 @@
 
 A 2D kalman filter tutorial for self<sub>t+dt</sub> and a stanger from space time.
 
-To design a kalman filter for an object moving on a 2D plane with 3 degrees of freedom (traslation in x, traslation in y and rotation along z).
+To design a kalman filter for an object moving on a 2D plane with 3 degrees of freedom (traslation in x, traslation in y and rotation along z or yaw).
 
 ## The motion model
 
@@ -34,7 +34,9 @@ The above motion equations can be represented as a state space equation as. Here
 <img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;X_{n&plus;1}&space;=&space;\begin{bmatrix}&space;x_{n&plus;1}&space;\\&space;y_{n&plus;1}&space;\\&space;\theta_{n&plus;1}&space;\\&space;\dot{x}_{n&plus;1}&space;\\&space;\dot{y}_{n&plus;1}&space;\\&space;\dot{\theta}_{n&plus;1}&space;\end{bmatrix}&space;=&space;\begin{bmatrix}&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;\end{bmatrix}&space;\begin{bmatrix}&space;x_{n}&space;\\&space;y_{n}&space;\\&space;\theta_{n}&space;\\&space;\dot{x}_{n}&space;\\&space;\dot{y}_{n}&space;\\&space;\dot{\theta}_{n}&space;\end{bmatrix}&space;&plus;&space;\begin{bmatrix}&space;\frac{t^2}{2}&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\frac{t^2}{2}&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\frac{t^2}{2}&space;\\&space;t&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;t&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;t&space;\end{bmatrix}&space;\begin{bmatrix}&space;\ddot{x}_n&space;\\&space;\ddot{y}_n&space;\\&space;\ddot{\theta}_n&space;\end{bmatrix}" title="\large X_{n+1} = \begin{bmatrix} x_{n+1} \\ y_{n+1} \\ \theta_{n+1} \\ \dot{x}_{n+1} \\ \dot{y}_{n+1} \\ \dot{\theta}_{n+1} \end{bmatrix} = \begin{bmatrix} 1 & 0 & 0 & t & 0 & 0 \\ 0 & 1 & 0 & 0 & t & 0 \\ 0 & 0 & 1 & 0 & 0 & t \\ 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x_{n} \\ y_{n} \\ \theta_{n} \\ \dot{x}_{n} \\ \dot{y}_{n} \\ \dot{\theta}_{n} \end{bmatrix} + \begin{bmatrix} \frac{t^2}{2} & 0 & 0 \\ 0 & \frac{t^2}{2} & 0 \\ 0 & 0 & \frac{t^2}{2} \\ t & 0 & 0 \\ 0 & t & 0 \\ 0 & 0 & t \end{bmatrix} \begin{bmatrix} \ddot{x}_n \\ \ddot{y}_n \\ \ddot{\theta}_n \end{bmatrix}" />
 
 </center>
+
 This space state equation can be represented as...
+
 <center>
 
 <img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;X_{n&plus;1}&space;=&space;AX_n&space;&plus;&space;BU_n&space;&plus;&space;w" title="\large X_{n+1} = AX_n + BU_n + w" />
@@ -74,14 +76,14 @@ Assuming there is no correlation between the noise in acceleration of x to the n
 
 ## Measurement model
 
-here we model our measurement devices (eg: GPS, imu) to update the state of our system. the meaurement equation can be written as. 
+here we model our sensors (eg: GPS, imu) to update the state of our system. the meaurement equation can be written as. 
 <center>
 
 <img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;Y_{t&plus;1}&space;=&space;H&space;X_{t&plus;1}&space;&plus;&space;V" title="\large Y_{t+1} = H X_{t+1} + V" />
 
 </center>
 
-The translation matrix <img src="https://render.githubusercontent.com/render/math?math=H"> allows us to convert meausrements coming in from devices to the form our state model uses to represent the system.
+The translation matrix <img src="https://render.githubusercontent.com/render/math?math=H"> allows us to convert meausrements coming in from sensors to the form our state model uses to represent the system.
 
 in our case say we have a local gps system that sends us position updates in same units hence the value 1, this value will change if we use different units for measurement or if we have another representation of position like polar instead of cartesian coordiantes.
 
@@ -95,7 +97,7 @@ the 3 rows say that we have 3 meausrements x,y,<img src="https://render.githubus
 
 ## Measurement noise
 
-Since there are no perfect measurement devices we have to model the noise in the system as follows. This noise is the standard deviation or the spread of the value our local GPS sends us. We also assume in this case like our measurement noise is uncorrelated hence the 0 non diagonal values.
+Since there are no perfect measurement devices we have to model the noise in the sensors. This noise is the standard deviation or the spread of the value measured by the sensors. Assuming that the measurement noise of the sensors in different dimesnions is uncorrelated, we set our non diagonal values in the measurement noise matrix to zero.
 
 <center>
 
