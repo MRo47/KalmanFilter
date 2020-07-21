@@ -1,8 +1,14 @@
 # Kalman Filter
 
-A 2D kalman filter tutorial for self<sub>t+dt</sub> and a stanger from space time.
+A 2D kalman filter tutorial for self<sub>t+dt</sub> and any explorer from space time.
 
 To design a kalman filter for an object moving on a 2D plane with 3 degrees of freedom (traslation in x, traslation in y and rotation along z or yaw).
+
+Lets start with some color
+
+## Kalman filter tracking robot position
+
+
 
 ## The motion model
 

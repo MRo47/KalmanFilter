@@ -75,10 +75,11 @@ def animate(i):
 # the animator
 ani = FuncAnimation(fig, animate, init_func=init,
                     interval=animation_interval_ms,
-                    frames=range(0, total_iters), repeat=False)
-plt.title('Kalman filter (Constant velocity model)')
-plt.show()
+                    frames=range(0, total_iters-1), repeat=False)
+plt.title('Kalman filter (Constant velocity model, sync)')
+# plt.show()
 
+ani.save('images/KF_no_imu_sync.gif', dpi=150, writer='imagemagick')
 
 ###################### Kalman Filter IMU SYNC ############################
 
@@ -130,9 +131,12 @@ def animate(i):
 # the animator
 ani = FuncAnimation(fig, animate, init_func=init,
                     interval=animation_interval_ms,
-                    frames=range(0, total_iters), repeat=False)
-plt.title('Kalman filter (with imu input)')
-plt.show()
+                    frames=range(0, total_iters-1), repeat=False)
+plt.title('Kalman filter (with imu input, sync)')
+# plt.show()
+
+ani.save('images/KF_with_imu_sync.gif', dpi=150, writer='imagemagick')
+
 
 ###################### Sensors async ####################################
 
@@ -196,7 +200,10 @@ ani = FuncAnimation(fig, animate, init_func=init,
                     interval=animation_interval_ms,
                     frames=range(0, total_iters-1), repeat=False)
 plt.title('Kalman filter (Constant velocity model, async)')
-plt.show()
+# plt.show()
+
+ani.save('images/KF_no_imu_async.gif', dpi=150, writer='imagemagick')
+
 
 ###################### Kalman Filter IMU ASYNC ##########################
 
@@ -253,4 +260,6 @@ ani = FuncAnimation(fig, animate, init_func=init,
                     interval=animation_interval_ms,
                     frames=range(0, total_iters-1), repeat=False)
 plt.title('Kalman filter (with imu input, async)')
-plt.show()
+# plt.show()
+
+ani.save('images/KF_with_imu_async.gif', dpi=150, writer='imagemagick')
