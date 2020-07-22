@@ -69,7 +69,7 @@ class KalmanFilter:
         ''' check if a measurement is valid '''
         return meas is not None and not np.isnan(meas).any()
 
-    def predict(self, accel_in):
+    def predict(self, accel_in, imu_noise=None):
         """ predict step of kalman filter 
         accel_in: 3x1 matrix of acceleration data (imu)
         """
@@ -80,12 +80,16 @@ class KalmanFilter:
         # predict the new state
         if self.measurement_valid(accel_in):
             self.X = self.A * self.X + self.B * accel_in.T
+            # predict the current covariance (with system + imu noise)
+            print('imu_diag: \n', np.matrix(imu_noise * np.identity(3)))
+            imu_noise = self.B * np.matrix(imu_noise * np.identity(3)) * self.B.T
+            self.P = self.A * self.P * self.A.T + imu_noise
         else:
             self.X = self.A * self.X  # predict the new state
+            # predict the current covariance (system noise only)
+            self.P = self.A * self.P * self.A.T + self.Q
+        
         # print('X predicted: \n', self.X)
-
-        # predict the current covariance
-        self.P = self.A * self.P * self.A.T + self.Q 
         # print('P predicted: \n', self.P)
         #asssuming no relation in errors
         # self.P = np.diag(np.diag(self.P))
@@ -123,13 +127,13 @@ class KalmanFilter:
 
         return np.array(self.X).flatten()
 
-    def step_update(self, meas, accel_in, r_diag=None):
+    def step_update(self, meas, accel_in, r_diag=None, imu_noise=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
 
         # keep original noise input if noise not given
         self.R = r_diag * np.identity(3) if r_diag is not None else self.R
 
-        self.predict(accel_in)
+        self.predict(accel_in, imu_noise=imu_noise)
 
         return self.update(meas, r_diag=None)
 
