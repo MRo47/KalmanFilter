@@ -39,7 +39,7 @@ missing_accel_data = ()
 # missing_accel_data = (20, 21, 22, 30, 31, 33, 34)
 # missing_accel_data = tuple(i for i in range(20,100))
 # initial noise estimate in state (position, velocity)
-p_diag = np.matrix([100, 100, 100, 600, 600, 600, 3000, 3000, 3000])
+p_diag = np.matrix([100, 100, 100, 600, 600, 600, 1000, 1000, 1000])
 # noise in acceleration
 q_diag = np.matrix([1e-1, 1e-1, 5e-1])
 
@@ -67,17 +67,12 @@ kf = KalmanFilterFusion(np.matrix([m_dat[0], m_dat[1], m_dat[2], 0, 0, 0, 0, 0, 
                         p_diag, q_diag, pos_dev, acc_dev, time_lims[0])
 
 # plotter initialise
-fig = plt.figure(1)
-ax1 = fig.add_subplot(4, 1, 1)
-# ax1.axis('equal')
-ax2 = fig.add_subplot(4, 1, 2)
-# ax2.axis('equal')
-ax3 = fig.add_subplot(4, 1, 3)
-# ax3.axis('equal')
-ax4 = fig.add_subplot(4, 1, 4)
-# ax4.axis('equal')
-# ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 105))
-
+plt.style.use('seaborn-darkgrid')
+fig, (ax1, ax2, ax3, ax4) = \
+    plt.subplots(4, 1, gridspec_kw={'height_ratios': [4, 1, 1, 1]})
+ax2.set_ylim(-10, 10)
+ax3.set_ylim(-10, 10)
+ax4.set_ylim(-0.5, 0.5)
 
 def init():
     # current state of kalman filter = m_data input
@@ -87,6 +82,7 @@ def init():
     vis.plot_acc(ax2, 0, i_dat[3], m_dat[3], p_dat[3])
     vis.plot_acc(ax3, 0, i_dat[4], m_dat[4], p_dat[4])
     vis.plot_acc(ax4, 0, i_dat[5], m_dat[5], p_dat[5])
+    plt.tight_layout()
     plt.legend()
 
 # animate function fetches data and updates kalman filter
