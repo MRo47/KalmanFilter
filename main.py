@@ -31,13 +31,17 @@ r_diag = pos_dev
 
 # timestamps at which data was missing from sensors
 # missing position data (eg: gps)
+# missing_pos_data = ()
 missing_pos_data = (10, 11, 12, 30, 31, 33, 34, 50, 51, 52)
+# missing_pos_data = tuple(i for i in range(20, 100))
 # missing acceleration data (eg: imus)
-missing_accel_data = (20, 21, 22, 30, 31, 33, 34)
+missing_accel_data = ()
+# missing_accel_data = (20, 21, 22, 30, 31, 33, 34)
+# missing_accel_data = tuple(i for i in range(20,100))
 # initial noise estimate in state (position, velocity)
 p_diag = np.matrix([100, 100, 100, 600, 600, 600, 3000, 3000, 3000])
 # noise in acceleration
-q_diag = np.matrix(1e-1 * np.ones(3))
+q_diag = np.matrix([1e-1, 1e-1, 5e-1])
 
 
 # the path generator function
@@ -63,50 +67,49 @@ kf = KalmanFilterFusion(np.matrix([m_dat[0], m_dat[1], m_dat[2], 0, 0, 0, 0, 0, 
                         p_diag, q_diag, pos_dev, acc_dev, time_lims[0])
 
 # plotter initialise
-fig = plt.figure()
-ax1 = fig.add_subplot(1, 1, 1)
-ax1.axis('equal')
+fig = plt.figure(1)
+ax1 = fig.add_subplot(4, 1, 1)
+# ax1.axis('equal')
+ax2 = fig.add_subplot(4, 1, 2)
+# ax2.axis('equal')
+ax3 = fig.add_subplot(4, 1, 3)
+# ax3.axis('equal')
+ax4 = fig.add_subplot(4, 1, 4)
+# ax4.axis('equal')
 # ax1 = plt.axes(xlim=(-5, 105), ylim=(-5, 105))
 
 
 def init():
     # current state of kalman filter = m_data input
-    p_dat = kf.get_state()[:3]
+    p_dat = kf.get_state()
     # plot initial state
-    vis.plot(ax1, i_dat, m_dat, p_dat)
+    vis.plot(ax1, i_dat, m_dat, p_dat[:3])
+    vis.plot_acc(ax2, 0, i_dat[3], m_dat[3], p_dat[3])
+    vis.plot_acc(ax3, 0, i_dat[4], m_dat[4], p_dat[4])
+    vis.plot_acc(ax4, 0, i_dat[5], m_dat[5], p_dat[5])
     plt.legend()
 
 # animate function fetches data and updates kalman filter
 
 def animate(i):
+    # print('\nIter(i): ', i+1)
     # get ideal and measurement data
     i_dat = next(ideal_data_f)
     m_dat = next(noisy_data_f)
     # update kalman filter
 
-    print('\nIter(i): ', i+1)
-
-    #update with position
-    meas = np.matrix(m_dat[:3])
-    if kf.measurement_valid(meas):
-        p_dat = kf.step_update(kf.MType.POS, meas, i+1)[:3]
-        # plot data
-        vis.plot(ax1, i_dat, m_dat, p_dat)
-
-    #update with imu
-    meas = np.matrix(m_dat[3:6])
-    if kf.measurement_valid(meas):
-        p_dat = kf.step_update(kf.MType.IMU, meas, i+1)[:3]
-        # plot data
-        vis.plot(ax1, i_dat, m_dat, p_dat)
-    
+    p_dat = kf.step_update(m_dat, i+1)
+    vis.plot(ax1, i_dat, m_dat, p_dat[:3])
+    vis.plot_acc(ax2, i+1, i_dat[3], m_dat[3], p_dat[3])
+    vis.plot_acc(ax3, i+1, i_dat[4], m_dat[4], p_dat[4])
+    vis.plot_acc(ax4, i+1, i_dat[5], m_dat[5], p_dat[5])
 
 
 # the animator
 ani = FuncAnimation(fig, animate, init_func=init,
                     interval=animation_interval_ms,
                     frames=range(time_lims[0], time_lims[1]), repeat=False)
-plt.title('Kalman filter (with imu input, sync)')
+plt.title('Kalman filter (sensor fusion)')
 plt.show()
 
 # ani.save('images/KF_with_imu_sync.gif', dpi=150, writer='imagemagick')

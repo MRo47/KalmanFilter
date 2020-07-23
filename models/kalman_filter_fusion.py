@@ -48,11 +48,17 @@ class KalmanFilterFusion:
 
     def __init__(self, state_0, p_diag, q_diag, r_pos, r_imu, start_time):
         """ Kalman filter model from initial parameters​        
+        
         Args:   
+            
             state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
+            
             accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
+            
             p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
+            
             q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
+            
             r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
         
         measurement noise r_diag is used as default, unless noise estimate is available at update for every point
@@ -134,9 +140,6 @@ class KalmanFilterFusion:
         Args:
             accel_in: 3x1 matrix of acceleration data (imu)
         """
-
-        print('Predict time: ', dt)
-
         ###################prediction stage#############################################
         if(dt >= 0.0001):  # if updates happen at same time state doesnt change
             # predict the new state
@@ -145,9 +148,7 @@ class KalmanFilterFusion:
             # predict the current covariance (system noise only)
             a = self.A(dt)
             self.P = a * self.P * a.T + self.Q(dt)
-            # print('P predicted: \n', self.P)
-            print('getting p')
-        
+            # print('P predicted: \n', self.P)        
         # print('Process Covariance after predict step:\n', self.P)
         return
 
@@ -166,12 +167,10 @@ class KalmanFilterFusion:
         H = None
         R = None
 
-        if m_type == MType.IMU: 
-            print('imu update')
+        if m_type == MType.IMU:
             H = self.H_imu
             R = noise if noise is not None else self.R_imu
         elif m_type == MType.POS:
-            print('pos update')
             H = self.H_pos
             R = noise if noise is not None else self.R_pos
         else:
@@ -193,7 +192,7 @@ class KalmanFilterFusion:
         self.P = (np.identity(9) - K * H) * self.P  # new covariance matrix
         return 
 
-    def step_update(self, m_type, meas, time_stamp, noise=None):
+    def step_update(self, meas, time_stamp, noise=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
 
         # keep original noise input if noise not given
@@ -201,9 +200,22 @@ class KalmanFilterFusion:
 
         # predict new state with time diff
         self.predict(time_stamp - self.last_update)
-
+        
         # update/correct the estimate
-        self.update(m_type, meas, noise=noise)
+
+        #update with position
+        m_in = np.matrix(meas[:3])
+        if self.measurement_valid(m_in):
+            # print('meas: ', m_in)
+            # print('pos update')
+            self.update(MType.POS, m_in, noise=noise)
+
+        #update with imu
+        m_in = np.matrix(meas[3:6])
+        if self.measurement_valid(m_in):
+            # print('meas: ', m_in)
+            # print('imu update')
+            self.update(MType.IMU, m_in, noise=noise)
 
         #reset timestamp
         self.last_update = time_stamp
