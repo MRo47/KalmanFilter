@@ -68,11 +68,19 @@ kf = KalmanFilterFusion(np.matrix([m_dat[0], m_dat[1], m_dat[2], 0, 0, 0, 0, 0, 
 
 # plotter initialise
 plt.style.use('seaborn-darkgrid')
-fig, (ax1, ax2, ax3, ax4) = \
-    plt.subplots(4, 1, gridspec_kw={'height_ratios': [4, 1, 1, 1]})
+# fig, (ax1, ax2, ax3, ax4) = \
+#     plt.subplots(4, 1, gridspec_kw={'height_ratios': [4, 1, 1, 1]})
+fig = plt.figure(constrained_layout=True)
+gs = fig.add_gridspec(3, 4)
+ax1 = fig.add_subplot(gs[:3, :3])
+ax2 = fig.add_subplot(gs[0, 3])
+ax3 = fig.add_subplot(gs[1, 3])
+ax4 = fig.add_subplot(gs[2, 3])
 ax2.set_ylim(-10, 10)
 ax3.set_ylim(-10, 10)
 ax4.set_ylim(-0.5, 0.5)
+
+acc_plt, = ax4.plot([], [], c='blue')
 
 def init():
     # current state of kalman filter = m_data input
@@ -81,9 +89,11 @@ def init():
     vis.plot(ax1, i_dat, m_dat, p_dat[:3])
     vis.plot_acc(ax2, 0, i_dat[3], m_dat[3], p_dat[3])
     vis.plot_acc(ax3, 0, i_dat[4], m_dat[4], p_dat[4])
-    vis.plot_acc(ax4, 0, i_dat[5], m_dat[5], p_dat[5])
+    # vis.plot_acc(ax4, 0, i_dat[5], m_dat[5], p_dat[5])
+    acc_plt.set_data(0, i_dat[5])
     plt.tight_layout()
     plt.legend()
+    return acc_plt,
 
 # animate function fetches data and updates kalman filter
 
@@ -98,13 +108,16 @@ def animate(i):
     vis.plot(ax1, i_dat, m_dat, p_dat[:3])
     vis.plot_acc(ax2, i+1, i_dat[3], m_dat[3], p_dat[3])
     vis.plot_acc(ax3, i+1, i_dat[4], m_dat[4], p_dat[4])
-    vis.plot_acc(ax4, i+1, i_dat[5], m_dat[5], p_dat[5])
+    # vis.plot_acc(ax4, i+1, i_dat[5], m_dat[5], p_dat[5])
+    acc_plt.set_data(i+1, i_dat[5])
+    return acc_plt,
 
 
 # the animator
 ani = FuncAnimation(fig, animate, init_func=init,
                     interval=animation_interval_ms,
-                    frames=range(time_lims[0], time_lims[1]), repeat=False)
+                    frames=range(time_lims[0], time_lims[1]), repeat=False,
+                    blit=False)
 plt.title('Kalman filter (sensor fusion)')
 plt.show()
 
