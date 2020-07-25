@@ -52,32 +52,50 @@ class Animator:
       self.iters = total_iters
       self.interval = interval_ms
       
-      self.line_i, = self.ax1.plot([], [], 'g-', alpha=0.3)
-      self.line_m, = self.ax1.plot([], [], 'b-', alpha=0.3) #c=(0.24, 0.53, 1.0, 0.5))
-      self.line_p, = self.ax1.plot([], [], 'ro')
+      self.line_i, = self.ax1.plot([], [], 'g-', alpha=0.3, label='ideal')
+      self.line_m, = self.ax1.plot([], [], 'b-', alpha=0.3, label='measured')
+      self.line_p, = self.ax1.plot([], [], 'ro', label='predicted')
 
-      self.line_iax, = self.ax2.plot([], [], 'g-')
-      self.line_max, = self.ax2.plot([], [], 'b-')
-      self.line_pax, = self.ax2.plot([], [], 'r-')
+      self.line_iax, = self.ax2.plot([], [], 'g-', label='ideal')
+      self.line_max, = self.ax2.plot([], [], 'b-', label='measured')
+      self.line_pax, = self.ax2.plot([], [], 'r-', label='predicted')
 
-      self.line_iay, = self.ax3.plot([], [], 'g-')
-      self.line_may, = self.ax3.plot([], [], 'b-')
-      self.line_pay, = self.ax3.plot([], [], 'r-')
+      self.line_iay, = self.ax3.plot([], [], 'g-', label='ideal')
+      self.line_may, = self.ax3.plot([], [], 'b-', label='measured')
+      self.line_pay, = self.ax3.plot([], [], 'r-', label='predicted')
 
-      self.line_iaq, = self.ax4.plot([], [], 'g-')
-      self.line_maq, = self.ax4.plot([], [], 'b-')
-      self.line_paq, = self.ax4.plot([], [], 'r-')
+      self.line_iaq, = self.ax4.plot([], [], 'g-', label='ideal')
+      self.line_maq, = self.ax4.plot([], [], 'b-', label='measured')
+      self.line_paq, = self.ax4.plot([], [], 'r-', label='predicted')
 
       self.ax1.set_xlim(-5, 105)
       self.ax1.set_ylim(-5, 65)
+      self.ax1.set_title('Robot position (Kalman Filter with sensor fusion gps + imu)')
+      self.ax1.set_xlabel('x-coordinate')
+      self.ax1.set_ylabel('y-coordinate')
+      self.ax1.legend()
 
       self.ax2.set_xlim(-1, 101)
-      self.ax3.set_xlim(-1, 101)
-      self.ax4.set_xlim(-1, 101)
-
       self.ax2.set_ylim(-8, 8)
+      self.ax2.set_title('Acceleration v/s Time in x')
+      self.ax2.set_xlabel('time')
+      self.ax2.set_ylabel('acceleration(x)')
+      self.ax2.legend()
+
+      self.ax3.set_xlim(-1, 101)
       self.ax3.set_ylim(-8, 8)
+      self.ax3.set_title('Acceleration v/s Time in y')
+      self.ax3.set_xlabel('time')
+      self.ax3.set_ylabel('acceleration(y)')
+      self.ax3.legend()
+
+      self.ax4.set_xlim(-1, 101)
       self.ax4.set_ylim(-0.5, 0.5)
+      self.ax4.set_title('Acceleration v/s Time in theta')
+      self.ax4.set_xlabel('time')
+      self.ax4.set_ylabel('acceleration(theta)')
+      self.ax4.legend()
+
 
       self.i_data = next(self.idata_f)
       self.m_data = next(self.mdata_f)
