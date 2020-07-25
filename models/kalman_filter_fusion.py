@@ -10,34 +10,6 @@ the available measurements are position and imu data (acceleration)
 import numpy as np
 from enum import Enum
 
-# class MotionModel:
-#     def __init__(self, A, Q):
-#         """
-#         Args:
-#             A (function): Function that computes A for time dt
-#             Q (function): Function that computes Q for time dt
-#         """
-#         self.A_ = A
-#         self.Q_ = Q
-
-#     def A(self, dt):
-#         ''' compute with time interval dt '''
-#         return self.A_(dt)
-
-#     def Q(self, dt):
-#         ''' compute with time interval dt '''
-#         return self.Q_(dt)
-
-# class MeasurementModel:
-#     def __init__(self, H, R):
-#         """
-#         Args:
-#             H (np.matrix): H matrix that translates measurement updates
-#             R (np.matrix): measurement noise covariance
-#         """
-#         self.H_ = H
-#         self.R_ = R
-
 class MType(Enum):
     POS = 1
     IMU = 2

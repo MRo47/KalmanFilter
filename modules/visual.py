@@ -52,20 +52,20 @@ class Animator:
       self.iters = total_iters
       self.interval = interval_ms
       
-      self.line_i, = self.ax1.plot([], [], 'g-', alpha=0.2)
-      self.line_m, = self.ax1.plot([], [], 'c-', alpha=0.2) #c=(0.24, 0.53, 1.0, 0.5))
+      self.line_i, = self.ax1.plot([], [], 'g-', alpha=0.3)
+      self.line_m, = self.ax1.plot([], [], 'b-', alpha=0.3) #c=(0.24, 0.53, 1.0, 0.5))
       self.line_p, = self.ax1.plot([], [], 'ro')
 
       self.line_iax, = self.ax2.plot([], [], 'g-')
-      self.line_max, = self.ax2.plot([], [], 'c-')
+      self.line_max, = self.ax2.plot([], [], 'b-')
       self.line_pax, = self.ax2.plot([], [], 'r-')
 
       self.line_iay, = self.ax3.plot([], [], 'g-')
-      self.line_may, = self.ax3.plot([], [], 'c-')
+      self.line_may, = self.ax3.plot([], [], 'b-')
       self.line_pay, = self.ax3.plot([], [], 'r-')
 
       self.line_iaq, = self.ax4.plot([], [], 'g-')
-      self.line_maq, = self.ax4.plot([], [], 'c-')
+      self.line_maq, = self.ax4.plot([], [], 'b-')
       self.line_paq, = self.ax4.plot([], [], 'r-')
 
       self.ax1.set_xlim(-5, 105)
@@ -113,9 +113,9 @@ class Animator:
       self.line_p.set_ydata(self.p_data[:i+1, 1])
 
       self.ax1.add_patch(self.plot_arrow(self.i_data[i, :],
-                                        color='green'))
+                                        color='g'))
       self.ax1.add_patch(self.plot_arrow(self.m_data[i, :],
-                                        color='blue'))
+                                        color='b'))
       self.ax1.add_patch(self.plot_arrow(self.p_data[i, :],
                                         alpha=1))
       self.t_data.append(i+1)
