@@ -4,6 +4,7 @@ from matplotlib.animation import FuncAnimation
 
 import modules.data_gen as dg
 import modules.visual as vis
+from modules.visual import Animator
 from models.kalman_filter_cv import KalmanFilterCV
 from models.kalman_filter import KalmanFilter
 from models.kalman_filter_fusion import KalmanFilterFusion
@@ -65,6 +66,25 @@ m_dat = next(noisy_data_f)
 # initialise kalman filter (with acceleration input)
 kf = KalmanFilterFusion(np.matrix([m_dat[0], m_dat[1], m_dat[2], 0, 0, 0, 0, 0, 0]),
                         p_diag, q_diag, pos_dev, acc_dev, time_lims[0])
+
+ka = Animator(plt, total_iters, animation_interval_ms,
+              ideal_data_f, noisy_data_f, kf)
+
+ka.run()
+exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # plotter initialise
 plt.style.use('seaborn-darkgrid')

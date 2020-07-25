@@ -31,49 +31,79 @@ def plot_acc(ax, time, ideal, measured, predicted,
 from matplotlib.animation import FuncAnimation
 
 
-class KalmanAnimator:
+class Animator:
    def __init__(self, plt, total_iters, interval_ms,
                 ideal_data_f, meas_data_f, k_filter):
       self.plt = plt
-      self.fig = plt.figure()
+      self.plt.style.use('seaborn-darkgrid')
+      # self.fig = plt.figure()
+      self.fig = plt.figure(constrained_layout=True)
+      # self.ax1 = self.fig.add_subplot(1, 1, 1)
+      gs = self.fig.add_gridspec(3, 4)
+      self.ax1 = self.fig.add_subplot(gs[:3, :3])
+      self.ax2 = self.fig.add_subplot(gs[0, 3])
+      self.ax3 = self.fig.add_subplot(gs[1, 3])
+      self.ax4 = self.fig.add_subplot(gs[2, 3])
+      
+      self.idata_f = ideal_data_f
+      self.mdata_f = meas_data_f
       self.kf = k_filter
 
       self.iters = total_iters
       self.interval = interval_ms
-      self.ax = self.fig.add_subplot(1, 1, 1)
-      self.line_i, = self.ax.plot([], [], c=(0.18, 0.72, 0.21, 0.5))
-      self.line_m, = self.ax.plot([], [], c=(0.24, 0.53, 1.0, 0.5))
-      self.line_p, = self.ax.plot([], [], c='red')
       
-      self.idata_f = ideal_data_f
-      self.mdata_f = meas_data_f
+      self.line_i, = self.ax1.plot([], [], 'g-', alpha=0.2)
+      self.line_m, = self.ax1.plot([], [], 'c-', alpha=0.2) #c=(0.24, 0.53, 1.0, 0.5))
+      self.line_p, = self.ax1.plot([], [], 'ro')
 
-      self.ax.set_xlim(-5, 105)
-      self.ax.set_ylim(-5, 65)
+      self.line_iax, = self.ax2.plot([], [], 'g-')
+      self.line_max, = self.ax2.plot([], [], 'c-')
+      self.line_pax, = self.ax2.plot([], [], 'r-')
 
-      self.i_data = next(self.idata_f)[:3]
-      self.m_data = next(self.mdata_f)[:3]
-      self.p_data = self.kf.get_state()[:3]
+      self.line_iay, = self.ax3.plot([], [], 'g-')
+      self.line_may, = self.ax3.plot([], [], 'c-')
+      self.line_pay, = self.ax3.plot([], [], 'r-')
 
-      self.ax.add_patch(self.plot_arrow(self.i_data))
-      self.ax.add_patch(self.plot_arrow(self.m_data))
-      self.ax.add_patch(self.plot_arrow(self.p_data))
+      self.line_iaq, = self.ax4.plot([], [], 'g-')
+      self.line_maq, = self.ax4.plot([], [], 'c-')
+      self.line_paq, = self.ax4.plot([], [], 'r-')
+
+      self.ax1.set_xlim(-5, 105)
+      self.ax1.set_ylim(-5, 65)
+
+      self.ax2.set_xlim(-1, 101)
+      self.ax3.set_xlim(-1, 101)
+      self.ax4.set_xlim(-1, 101)
+
+      self.ax2.set_ylim(-8, 8)
+      self.ax3.set_ylim(-8, 8)
+      self.ax4.set_ylim(-0.5, 0.5)
+
+      self.i_data = next(self.idata_f)
+      self.m_data = next(self.mdata_f)
+      self.p_data = self.kf.get_state()
+      self.t_data = [0]
+
+      # self.ax1.add_patch(self.plot_arrow(self.i_data))
+      # self.ax1.add_patch(self.plot_arrow(self.m_data))
+      # self.ax1.add_patch(self.plot_arrow(self.p_data))
    
    def plot_arrow(self, pose, width=0.1,
-                  color=(0.3, 0.3, 0.3, 0.5)):
+                  color='black', alpha=0.2):
          return self.plt.arrow(pose[0], pose[1],
                                np.cos(pose[2]),
                                np.sin(pose[2]),
                                width=width,
-                               color=color)
+                               color=color,
+                               alpha=alpha)
    
    def animate(self, i):
       m_dat = next(self.mdata_f)
 
-      self.i_data = np.vstack((self.i_data, next(self.idata_f)[:3]))
-      self.m_data = np.vstack((self.m_data, m_dat[:3]))
+      self.i_data = np.vstack((self.i_data, next(self.idata_f)))
+      self.m_data = np.vstack((self.m_data, m_dat))
       self.p_data = np.vstack((self.p_data, 
-                               self.kf.step_update(m_dat, i+1)[:3]))
+                               self.kf.step_update(m_dat, i+1)))
 
       self.line_i.set_xdata(self.i_data[:i+1, 0])
       self.line_i.set_ydata(self.i_data[:i+1, 1])
@@ -82,11 +112,30 @@ class KalmanAnimator:
       self.line_p.set_xdata(self.p_data[:i+1, 0])
       self.line_p.set_ydata(self.p_data[:i+1, 1])
 
-      self.ax.add_patch(self.plot_arrow(self.i_data[i, :]))
-      self.ax.add_patch(self.plot_arrow(self.m_data[i, :]))
-      self.ax.add_patch(self.plot_arrow(self.p_data[i, :]))
+      # self.ax1.add_patch(self.plot_arrow(self.i_data[i, :],
+      #                                   color='green'))
+      # self.ax1.add_patch(self.plot_arrow(self.m_data[i, :],
+      #                                   color='blue'))
+      # self.ax1.add_patch(self.plot_arrow(self.p_data[i, :],
+      #                                   alpha=1))
+      self.t_data.append(i+1)
 
-      return self.line_i, self.line_m, self.line_p
+      self.line_iax.set_data(self.t_data[:i+1], self.i_data[:i+1, 3])
+      self.line_max.set_data(self.t_data[:i+1], self.m_data[:i+1, 3])
+      self.line_pax.set_data(self.t_data[:i+1], self.p_data[:i+1, 3])
+
+      self.line_iay.set_data(self.t_data[:i+1], self.i_data[:i+1, 4])
+      self.line_may.set_data(self.t_data[:i+1], self.m_data[:i+1, 4])
+      self.line_pay.set_data(self.t_data[:i+1], self.p_data[:i+1, 4])
+
+      self.line_iaq.set_data(self.t_data[:i+1], self.i_data[:i+1, 5])
+      self.line_maq.set_data(self.t_data[:i+1], self.m_data[:i+1, 5])
+      self.line_paq.set_data(self.t_data[:i+1], self.p_data[:i+1, 5])
+
+      return (self.line_i, self.line_m, self.line_p,
+             self.line_iax, self.line_max, self.line_pax, 
+             self.line_iay, self.line_may, self.line_pay,
+             self.line_iaq, self.line_maq, self.line_paq)
 
    def run(self):
       anim = FuncAnimation(self.fig, self.animate,
