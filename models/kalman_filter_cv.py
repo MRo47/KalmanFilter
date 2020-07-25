@@ -12,7 +12,7 @@ import numpy as np
 
 
 class KalmanFilterCV:
-    def __init__(self, state_0, p_diag, q_diag, r_diag, dt=1):
+    def __init__(self, state_0, p_diag, q_diag, r_diag, start_time):
         """ Kalman filter model from initial parameters​        
         Args:   
             state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
@@ -24,25 +24,24 @@ class KalmanFilterCV:
         """
         # state space model
         self.X = state_0.T  # [x, y, t, x', y', t']
-        self.A = np.eye(6)
-        self.A[[0, 1, 2], [3, 4, 5]] = dt  # discrete time constant
-        print('A: \n', self.A)
+        
+        print('A(1): \n', self.A(1))
 
-        self.B = np.vstack((0.5*dt**2*np.eye(3), dt*np.eye(3)))
-        # self.U = accel_0.T  # acceleration 0 for constant velocity model
-        print('B: \n', self.B)
+        self.B = lambda t : np.vstack((0.5*t**2*np.eye(3), t*np.eye(3)))
+        # acceleration 0 for constant velocity model
+        # also no external control inputs are provided U = 0
+        print('B(1): \n', self.B(1))
 
         # initial variance
         self.P = np.diagflat(p_diag)
         print('P: \n', self.P)
 
         # Process noise
-        q_diag = np.diagflat(q_diag)
+        self.q_diag = np.diagflat(q_diag)
         print('q_diag: \n', q_diag)
 
         # Process noise matrix
-        self.Q = self.B * q_diag * self.B.T
-        print('Q: \n', self.Q)
+        print('Q(1): \n', self.Q(1))
 
         # transform matrix, we measure only positon hence
         # value of diagonal elements is 1 since meausred and state values are in same units
@@ -54,46 +53,67 @@ class KalmanFilterCV:
         self.R = np.diagflat(r_diag)
         print('R: \n', self.R)
 
+        #last update
+        self.last_update = start_time
+        print('Start time: ', self.last_update)
+
+    def A(self, t):
+        ''' compute A with time interval t '''
+        return np.matrix([[1, 0, 0, t, 0, 0],
+                          [0, 1, 0, 0, t, 0],
+                          [0, 0, 1, 0, 0, t],
+                          [0, 0, 0, 1, 0, 0],
+                          [0, 0, 0, 0, 1, 0],
+                          [0, 0, 0, 0, 0, 1]])
+
+    def Q(self, t):
+        ''' compute Q with time interval t '''
+        B_t = self.B(t)
+        return B_t * self.q_diag * B_t.T
+
     def __str__(self):
         """ State of the kalman filter """
         return (f'Kalman Filter \n' +
                 f'X (State) :\n {self.X} \n\n' +
-                f'A (Dynamics matrix) :\n {self.A} \n\n' +
+                f'A (Dynamics matrix) :\n {self.A(1)} \n\n' +
                 f'P (Noise Covariance matrix):\n {self.P} \n\n' +
-                f'Q (Process Covariance matrix):\n {self.Q} \n\n' +
+                f'Q (Process Covariance matrix):\n {self.Q(1)} \n\n' +
                 f'H (Translation matrix):\n {self.H} \n\n' +
                 f'R (Measurement noise matrix):\n {self.R} \n\n')
-
+    
     def measurement_valid(self, meas):
         ''' check if a measurement is valid '''
         return meas is not None and not np.isnan(meas).any()
 
-    def predict(self):
-        ''' predict step of kalman filter '''
+    def predict(self, dt):
+        """ predict step of kalman filter 
+        Args:
+            dt: time differnce to last update
+        """
         ###################prediction stage#############################################
+        if(dt >= 0.0001):  # if updates happen at same time state doesnt change
+            # predict the new state
+            self.X = self.A(dt) * self.X
+            # print('X predicted: \n', self.X)
+            # predict the current covariance (system noise only)
+            a = self.A(dt)
+            self.P = a * self.P * a.T + self.Q(dt)
+            # print('P predicted: \n', self.P)
+        # print('Process Covariance after predict step:\n', self.P)
+        return
 
-        self.X = self.A * self.X  # predict the new state
-
-        self.P = self.A * self.P * self.A.T + self.Q  # predict the current covariance
-        #asssuming no relation in errors
-        # self.P = np.diag(np.diag(self.P))
-
-        log.info('Process Covariance after predict step:\n%s', self.P)
-
-        return np.array(self.X).flatten()
-
-    def update(self, meas, r_diag=None):
+    def update(self, meas, noise=None):
         ''' update step of kalman filter 
-        args:
-        meas: position measurement, array like of dims 1X3 (x, y, t)
-        r_diag: (optional) measurement covariance of dims 1x3
+        Args:
+            meas: position measurement, array like of dims 1X3 (x, y, t)
+            noise: (optional) measurement covariance of dims 1x3
         '''
+
         # if no measurement input no update step is performed
         if not self.measurement_valid(meas):
-            # return current state
-            return np.array(self.X).flatten()
+            return
 
-        self.R = np.diagflat(r_diag) if r_diag is not None else self.R
+        self.R = np.diagflat(noise) if noise is not None else self.R
 
         ###############Kalman Gain Calculation##########################################
         I = self.H * self.P * self.H.T + self.R  # Innovation
@@ -101,6 +121,7 @@ class KalmanFilterCV:
         K = self.P * self.H.T * I.I  # Kalman gain
 
         ###############Update step######################################################
+        
         # new observation x,y,t(1x3).T = 3x1
         Y = np.matrix(meas).T
 
@@ -108,23 +129,27 @@ class KalmanFilterCV:
         self.X = self.X + K * (Y - self.H * self.X)  
 
         # update the process covariance
-        self.P = (np.identity(6) - K * self.H) * \
-            self.P  # new covariance matrix
+        self.P = (np.identity(6) - K * self.H) * self.P
 
-        # return updated state
-        return np.array(self.X).flatten()
+        return
 
-    def step_update(self, meas, r_diag=None):
+    def step_update(self, meas, time_stamp, noise=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
         
         # keep original noise input if noise not given
-        self.R = np.diagflat(r_diag) if r_diag is not None else self.R
+        noise = np.diagflat(noise) if noise is not None else None
 
-        # run predict step on current data
-        self.predict()
+        # predict new state with time diff
+        self.predict(time_stamp - self.last_update)
 
-        # update and return state
-        return self.update(meas, r_diag=None)
+        # update state
+        # only use pos measurements for update
+        self.update(meas[:3], noise=noise)
+
+        # reset timestamp
+        self.last_update = time_stamp
+
+        return np.array(self.X).flatten()
 
     def get_state(self):
         ''' return state as np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''

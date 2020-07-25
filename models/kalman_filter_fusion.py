@@ -77,6 +77,7 @@ class KalmanFilterFusion:
         print('Start time: ', self.last_update)
 
     def A(self, t):
+        ''' compute A with time interval t '''
         t2 = 0.5*t**2
         return np.matrix([[1, 0, 0, t, 0, 0, t2,  0,   0],
                           [0, 1, 0, 0, t, 0, 0,  t2,   0],
@@ -89,7 +90,7 @@ class KalmanFilterFusion:
                           [0, 0, 0, 0, 0, 0, 0,   0,   1]])
     
     def Q(self, t):
-        ''' compute with time interval t '''
+        ''' compute Q with time interval t '''
         B_t = self.B(t)
         return B_t * self.q_diag * B_t.T
     
@@ -110,7 +111,7 @@ class KalmanFilterFusion:
     def predict(self, dt):
         """ predict step of kalman filter 
         Args:
-            accel_in: 3x1 matrix of acceleration data (imu)
+            dt: time differnce to last update
         """
         ###################prediction stage#############################################
         if(dt >= 0.0001):  # if updates happen at same time state doesnt change
@@ -133,8 +134,7 @@ class KalmanFilterFusion:
         
         # if no measurement input no update step is performed
         if not self.measurement_valid(meas):
-            # return current state
-            return np.array(self.X).flatten()
+            return
 
         H = None
         R = None
@@ -156,19 +156,21 @@ class KalmanFilterFusion:
 
         ###############Update step######################################################
         
-        Y = np.matrix(meas).T  # new observation
+        # new observation
+        Y = np.matrix(meas).T  
 
-        self.X = self.X + K * (Y - H * self.X)  # new state estimate
+        # new state estimate
+        self.X = self.X + K * (Y - H * self.X)  
 
         # update the process covariance
-        self.P = (np.identity(9) - K * H) * self.P  # new covariance matrix
+        self.P = (np.identity(9) - K * H) * self.P
         return 
 
     def step_update(self, meas, time_stamp, noise=None):
         ''' runs predict step and runs update step if a valid measurement is recieved '''
 
         # keep original noise input if noise not given
-        noise = noise * np.identity(3) if noise is not None else None
+        noise = np.diagflat(noise) if noise is not None else None
 
         # predict new state with time diff
         self.predict(time_stamp - self.last_update)
