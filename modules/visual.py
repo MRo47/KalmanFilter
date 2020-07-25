@@ -35,7 +35,7 @@ class Animator:
    def __init__(self, plt, total_iters, interval_ms,
                 ideal_data_f, meas_data_f, k_filter):
       self.plt = plt
-      self.plt.style.use('seaborn-darkgrid')
+      self.plt.style.use('ggplot')
       # self.fig = plt.figure()
       self.fig = plt.figure(constrained_layout=True)
       # self.ax1 = self.fig.add_subplot(1, 1, 1)
@@ -84,13 +84,13 @@ class Animator:
       self.p_data = self.kf.get_state()
       self.t_data = [0]
 
-      # self.ax1.add_patch(self.plot_arrow(self.i_data))
-      # self.ax1.add_patch(self.plot_arrow(self.m_data))
-      # self.ax1.add_patch(self.plot_arrow(self.p_data))
+      self.ax1.add_patch(self.plot_arrow(self.i_data))
+      self.ax1.add_patch(self.plot_arrow(self.m_data))
+      self.ax1.add_patch(self.plot_arrow(self.p_data))
    
    def plot_arrow(self, pose, width=0.1,
                   color='black', alpha=0.2):
-         return self.plt.arrow(pose[0], pose[1],
+         return self.ax1.arrow(pose[0], pose[1],
                                np.cos(pose[2]),
                                np.sin(pose[2]),
                                width=width,
@@ -112,12 +112,12 @@ class Animator:
       self.line_p.set_xdata(self.p_data[:i+1, 0])
       self.line_p.set_ydata(self.p_data[:i+1, 1])
 
-      # self.ax1.add_patch(self.plot_arrow(self.i_data[i, :],
-      #                                   color='green'))
-      # self.ax1.add_patch(self.plot_arrow(self.m_data[i, :],
-      #                                   color='blue'))
-      # self.ax1.add_patch(self.plot_arrow(self.p_data[i, :],
-      #                                   alpha=1))
+      self.ax1.add_patch(self.plot_arrow(self.i_data[i, :],
+                                        color='green'))
+      self.ax1.add_patch(self.plot_arrow(self.m_data[i, :],
+                                        color='blue'))
+      self.ax1.add_patch(self.plot_arrow(self.p_data[i, :],
+                                        alpha=1))
       self.t_data.append(i+1)
 
       self.line_iax.set_data(self.t_data[:i+1], self.i_data[:i+1, 3])
