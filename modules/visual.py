@@ -32,12 +32,18 @@ from matplotlib.animation import FuncAnimation
 
 
 class Animator:
-   def __init__(self, plt, total_iters, interval_ms,
-                ideal_data_f, meas_data_f, k_filter):
+   def __init__(self, title, plt, total_iters, interval_ms,
+                ideal_data_f, meas_data_f, k_filter,
+                figsize=(20, 10),
+                pos_axis_limits=(-5, 105, -5, 65),
+                acc_x_limits=(-1, 101, -8,  8),
+                acc_y_limits=(-1, 101, -8,  8),
+                acc_q_limits=(-1, 101, -0.5,  0.5)):
       self.plt = plt
       self.plt.style.use('ggplot')
       # self.fig = plt.figure()
-      self.fig = plt.figure(constrained_layout=True)
+      self.fig = plt.figure(constrained_layout=True,
+                            figsize=figsize)
       # self.ax1 = self.fig.add_subplot(1, 1, 1)
       gs = self.fig.add_gridspec(3, 4)
       self.ax1 = self.fig.add_subplot(gs[:3, :3])
@@ -68,29 +74,29 @@ class Animator:
       self.line_maq, = self.ax4.plot([], [], 'b-', label='measured')
       self.line_paq, = self.ax4.plot([], [], 'r-', label='predicted')
 
-      self.ax1.set_xlim(-5, 105)
-      self.ax1.set_ylim(-5, 65)
-      self.ax1.set_title('Robot position (Kalman Filter with sensor fusion gps + imu)')
+      self.ax1.set_xlim(pos_axis_limits[0], pos_axis_limits[1]) 
+      self.ax1.set_ylim(pos_axis_limits[2], pos_axis_limits[3])
+      self.ax1.set_title(title)
       self.ax1.set_xlabel('x-coordinate')
       self.ax1.set_ylabel('y-coordinate')
       self.ax1.legend()
 
-      self.ax2.set_xlim(-1, 101)
-      self.ax2.set_ylim(-8, 8)
+      self.ax2.set_xlim(acc_x_limits[0], acc_x_limits[1])
+      self.ax2.set_ylim(acc_x_limits[2], acc_x_limits[3])
       self.ax2.set_title('Acceleration v/s Time in x')
       self.ax2.set_xlabel('time')
       self.ax2.set_ylabel('acceleration(x)')
       self.ax2.legend()
 
-      self.ax3.set_xlim(-1, 101)
-      self.ax3.set_ylim(-8, 8)
+      self.ax3.set_xlim(acc_y_limits[0], acc_y_limits[1])
+      self.ax3.set_ylim(acc_y_limits[2], acc_y_limits[3])
       self.ax3.set_title('Acceleration v/s Time in y')
       self.ax3.set_xlabel('time')
       self.ax3.set_ylabel('acceleration(y)')
       self.ax3.legend()
 
-      self.ax4.set_xlim(-1, 101)
-      self.ax4.set_ylim(-0.5, 0.5)
+      self.ax4.set_xlim(acc_q_limits[0], acc_q_limits[1])
+      self.ax4.set_ylim(acc_q_limits[2], acc_q_limits[3])
       self.ax4.set_title('Acceleration v/s Time in theta')
       self.ax4.set_xlabel('time')
       self.ax4.set_ylabel('acceleration(theta)')

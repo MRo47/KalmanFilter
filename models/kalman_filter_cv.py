@@ -25,6 +25,13 @@ class KalmanFilterCV:
         # state space model
         self.X = state_0.T  # [x, y, t, x', y', t']
         
+        # compute A with time interval t
+        self.A = lambda t: np.matrix([[1, 0, 0, t, 0, 0],
+                                      [0, 1, 0, 0, t, 0],
+                                      [0, 0, 1, 0, 0, t],
+                                      [0, 0, 0, 1, 0, 0],
+                                      [0, 0, 0, 0, 1, 0],
+                                      [0, 0, 0, 0, 0, 1]])
         print('A(1): \n', self.A(1))
 
         self.B = lambda t : np.vstack((0.5*t**2*np.eye(3), t*np.eye(3)))
@@ -57,17 +64,11 @@ class KalmanFilterCV:
         self.last_update = start_time
         print('Start time: ', self.last_update)
 
-    def A(self, t):
-        ''' compute A with time interval t '''
-        return np.matrix([[1, 0, 0, t, 0, 0],
-                          [0, 1, 0, 0, t, 0],
-                          [0, 0, 1, 0, 0, t],
-                          [0, 0, 0, 1, 0, 0],
-                          [0, 0, 0, 0, 1, 0],
-                          [0, 0, 0, 0, 0, 1]])
-
     def Q(self, t):
         ''' compute Q with time interval t '''
+        # Q could be a lambda function but this would mean 
+        # B will be computed twice B and B.T hence the value is taken once here
+        # Then transposed
         B_t = self.B(t)
         return B_t * self.q_diag * B_t.T
 
