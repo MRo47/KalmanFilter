@@ -199,3 +199,6 @@ class KalmanFilterFusion:
     def get_state(self):
         ''' return box coordinates and velocities np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
         return np.array(self.X).flatten()
+    
+    def get_noise(self):
+        return np.diagonal(self.P)

@@ -155,3 +155,6 @@ class KalmanFilterCV:
     def get_state(self):
         ''' return state as np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
         return np.array(self.X).flatten()
+    
+    def get_noise(self):
+        return np.diagonal(self.P)

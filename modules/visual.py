@@ -106,6 +106,7 @@ class Animator:
       self.i_data = next(self.idata_f)
       self.m_data = next(self.mdata_f)
       self.p_data = self.kf.get_state()
+      self.sn_data = self.kf.get_noise()[:3]
       self.t_data = [0]
 
       self.ax1.add_patch(self.plot_arrow(self.i_data))
@@ -128,6 +129,8 @@ class Animator:
       self.m_data = np.vstack((self.m_data, m_dat))
       self.p_data = np.vstack((self.p_data, 
                                self.kf.step_update(m_dat, i+1)))
+      self.sn_data = np.vstack((self.sn_data,
+                                self.kf.get_noise()[:3]))
 
       self.line_i.set_xdata(self.i_data[:i+1, 0])
       self.line_i.set_ydata(self.i_data[:i+1, 1])
@@ -157,16 +160,50 @@ class Animator:
       self.line_paq.set_data(self.t_data[:i+1], self.p_data[:i+1, 5])
 
       return (self.line_i, self.line_m, self.line_p,
-             self.line_iax, self.line_max, self.line_pax, 
-             self.line_iay, self.line_may, self.line_pay,
-             self.line_iaq, self.line_maq, self.line_paq)
+              self.line_iax, self.line_max, self.line_pax,
+              self.line_iay, self.line_may, self.line_pay,
+              self.line_iaq, self.line_maq, self.line_paq)
 
    def run(self):
       anim = FuncAnimation(self.fig, self.animate,
                            frames=self.iters,
                            interval=self.interval,
-                           blit=False, repeat=False)
+                           blit=False, repeat=False)      
       self.plt.show()
+   
+   def rmse(self, preds, targets):
+      return np.sqrt(np.mean(((preds-targets)**2)))
+   
+   def error_analysis(self):
+      print('RMSE(x): ',
+            self.rmse(self.p_data[:, 0], self.i_data[:, 0]))
+      print('RMSE(y): ',
+            self.rmse(self.p_data[:, 1], self.i_data[:, 1]))
+      print('RMSE(theta): ',
+            self.rmse(self.p_data[:, 2], self.i_data[:, 2]))
+
+      fig, ax = plt.subplots(3)
+      fig.suptitle('System noise estimate in pose (P) vs time')
+
+      ax[0].plot(self.t_data, self.sn_data[:, 0],
+                 label='P_x', color='red')
+      ax[1].plot(self.t_data, self.sn_data[:, 1],
+                 label='P_y', color='green')
+      ax[2].plot(self.t_data, self.sn_data[:, 2],
+                 label='P_theta', color='blue')
+      ax[0].set_ylabel('Variance(x)')
+      ax[1].set_ylabel('Variance(y)')
+      ax[2].set_ylabel('Variance(theta)')
+      ax[0].set_xlabel('time')
+      ax[1].set_xlabel('time')
+      ax[2].set_xlabel('time')
+      
+      ax[0].set_ylim(0, 50)
+      ax[1].set_ylim(0, 50)
+      ax[2].set_ylim(0, 50)
+
+      plt.show()
+
 
 
 
