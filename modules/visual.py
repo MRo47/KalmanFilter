@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 def plot_data(ax, xyq, label, c=['#a6e4ff', 'grey'], width=0.1):
     x_diff = np.cos(xyq[2])
@@ -27,8 +28,6 @@ def plot_acc(ax, time, ideal, measured, predicted,
                 ax.scatter(time, measured, c=meas_c)
              if(not np.isnan(predicted).any()):
                 ax.scatter(time, predicted, c=pred_c)
-
-from matplotlib.animation import FuncAnimation
 
 
 class Animator:
@@ -109,9 +108,14 @@ class Animator:
       self.sn_data = self.kf.get_noise()[:3]
       self.t_data = [0]
 
-      self.ax1.add_patch(self.plot_arrow(self.i_data))
-      self.ax1.add_patch(self.plot_arrow(self.m_data))
-      self.ax1.add_patch(self.plot_arrow(self.p_data))
+      self.ax1.add_patch(self.plot_arrow(self.i_data,
+                                         color='g'))
+      self.ax1.add_patch(self.plot_arrow(self.m_data,
+                                         color='b'))
+      self.ax1.add_patch(self.plot_arrow(self.p_data,
+                                         alpha=1))
+
+      self.anim_count = 0
    
    def plot_arrow(self, pose, width=0.1,
                   color='black', alpha=0.2):
@@ -123,6 +127,12 @@ class Animator:
                                alpha=alpha)
    
    def animate(self, i):
+      self.anim_count+=1
+      i=self.anim_count
+      if i >= self.iters:
+         return
+
+      # print('frame: ', i)
       m_dat = next(self.mdata_f)
 
       self.i_data = np.vstack((self.i_data, next(self.idata_f)))
@@ -164,17 +174,23 @@ class Animator:
               self.line_iay, self.line_may, self.line_pay,
               self.line_iaq, self.line_maq, self.line_paq)
 
-   def run(self):
+   def run(self, save_path=None):
       anim = FuncAnimation(self.fig, self.animate,
-                           frames=self.iters,
+                           frames=self.iters-1,
                            interval=self.interval,
-                           blit=False, repeat=False)      
-      self.plt.show()
+                           blit=False, repeat=False)
+
+      if save_path is not None:
+         print('Processing animation.....')
+         anim.save(save_path, dpi=72, writer='imagemagick')
+         print('Saved animation to: ', save_path)
+      else:
+         self.plt.show()
    
    def rmse(self, preds, targets):
       return np.sqrt(np.mean(((preds-targets)**2)))
    
-   def error_analysis(self):
+   def error_analysis(self, save_path=None):
       print('RMSE(x): ',
             self.rmse(self.p_data[:, 0], self.i_data[:, 0]))
       print('RMSE(y): ',
@@ -198,11 +214,16 @@ class Animator:
       ax[1].set_xlabel('time')
       ax[2].set_xlabel('time')
       
-      ax[0].set_ylim(0, 50)
-      ax[1].set_ylim(0, 50)
-      ax[2].set_ylim(0, 50)
+      ax[0].set_ylim(-5, 50)
+      ax[1].set_ylim(-5, 50)
+      ax[2].set_ylim(-5, 50)
 
-      plt.show()
+      if save_path is not None:
+         print('Processing plot.....')
+         plt.savefig(save_path, dpi=72, bbox_inches='tight')
+         print('Saved plot to: ', save_path)
+      else:
+         plt.show()
 
 
 

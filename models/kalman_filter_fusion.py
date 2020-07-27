@@ -74,7 +74,6 @@ class KalmanFilterFusion:
 
         # last update
         self.last_update = start_time
-        print('Start time: ', self.last_update)
 
     def A(self, t):
         ''' compute A with time interval t '''

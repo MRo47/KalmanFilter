@@ -62,7 +62,6 @@ class KalmanFilterCV:
 
         #last update
         self.last_update = start_time
-        print('Start time: ', self.last_update)
 
     def Q(self, t):
         ''' compute Q with time interval t '''
