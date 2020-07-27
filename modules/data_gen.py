@@ -66,7 +66,7 @@ class PathGen(PathFunc):
         """
         super().__init__(coeffs=coeffs)
         
-        # assert max_t > min_t, 'max time should be greater than min time, causality error ;-)'
+        assert max_t > min_t, 'max time should be greater than min time, causality error ;-)'
         
         self.min_t = min_t
         self.max_t = max_t
