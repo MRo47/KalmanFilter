@@ -45,9 +45,9 @@ class Animator:
                 start_time=0,
                 figsize=(20, 10),
                 pos_axis_limits=(-5, 105, -5, 65),
-                acc_x_limits=(-1, 101, -8,  8),
-                acc_y_limits=(-1, 101, -8,  8),
-                acc_q_limits=(-1, 101, -0.5,  0.5)):
+                acc_x_limits=(-1, 101, -2,  2),
+                acc_y_limits=(-1, 101, -2,  2),
+                acc_q_limits=(-1, 101, -0.2,  0.2)):
       """
       Args:
          title (string): Name of the main figure
@@ -200,16 +200,16 @@ class Animator:
 
       # set the data on acceleration state graphs
       self.line_iax.set_data(self.t_data[:i+1], self.i_data[:i+1, 3])
-      self.line_max.set_data(self.t_data[:i+1], self.m_data[:i+1, 3])
-      self.line_pax.set_data(self.t_data[:i+1], self.p_data[:i+1, 3])
-
       self.line_iay.set_data(self.t_data[:i+1], self.i_data[:i+1, 4])
-      self.line_may.set_data(self.t_data[:i+1], self.m_data[:i+1, 4])
-      self.line_pay.set_data(self.t_data[:i+1], self.p_data[:i+1, 4])
-
       self.line_iaq.set_data(self.t_data[:i+1], self.i_data[:i+1, 5])
+
+      self.line_max.set_data(self.t_data[:i+1], self.m_data[:i+1, 3])
+      self.line_may.set_data(self.t_data[:i+1], self.m_data[:i+1, 4])
       self.line_maq.set_data(self.t_data[:i+1], self.m_data[:i+1, 5])
-      self.line_paq.set_data(self.t_data[:i+1], self.p_data[:i+1, 5])
+
+      self.line_pax.set_data(self.t_data[:i+1], self.p_data[:i+1, 6])
+      self.line_pay.set_data(self.t_data[:i+1], self.p_data[:i+1, 7])
+      self.line_paq.set_data(self.t_data[:i+1], self.p_data[:i+1, 8])
 
       # return artist objects
       return (self.line_i, self.line_m, self.line_p,

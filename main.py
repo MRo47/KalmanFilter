@@ -96,8 +96,6 @@ anim.run()
 anim.error_analysis()
 # anim.error_analysis(save_path='images/KF_DR_no_acc_err.png')
 
-
-
 ###################### Kalman Filter DR (IMU input only) ##################
 
 # the path generator function
@@ -178,3 +176,5 @@ anim.run()
 anim.error_analysis()
 # anim.error_analysis(save_path='images/KF_fusion_err.png')
 
+
+#TODO remove acceleration plot for constant velocity model
