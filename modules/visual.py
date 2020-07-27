@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
 
 def plot_data(ax, xyq, label, c=['#a6e4ff', 'grey'], width=0.1):
     x_diff = np.cos(xyq[2])
@@ -115,7 +116,7 @@ class Animator:
       self.ax1.add_patch(self.plot_arrow(self.p_data,
                                          alpha=1))
 
-      self.anim_count = 0
+      self.anim_count = k_filter.min_t
    
    def plot_arrow(self, pose, width=0.1,
                   color='black', alpha=0.2):
@@ -174,12 +175,16 @@ class Animator:
               self.line_iay, self.line_may, self.line_pay,
               self.line_iaq, self.line_maq, self.line_paq)
 
-   def run(self, save_path=None):
+   def run(self, save_path=None, get_anim=False):
       anim = FuncAnimation(self.fig, self.animate,
                            frames=self.iters-1,
                            interval=self.interval,
                            blit=False, repeat=False)
 
+      if get_anim:
+         print('Processing animation.....')
+         return anim
+      
       if save_path is not None:
          print('Processing animation.....')
          anim.save(save_path, dpi=72, writer='imagemagick')
@@ -199,6 +204,7 @@ class Animator:
             self.rmse(self.p_data[:, 2], self.i_data[:, 2]))
 
       fig, ax = plt.subplots(3)
+      fig.set_size_inches(20, 10)
       fig.suptitle('System noise estimate in pose (P) vs time')
 
       ax[0].plot(self.t_data, self.sn_data[:, 0],
@@ -223,6 +229,7 @@ class Animator:
          plt.savefig(save_path, dpi=72, bbox_inches='tight')
          print('Saved plot to: ', save_path)
       else:
+         plt.tight_layout()
          plt.show()
 
 
