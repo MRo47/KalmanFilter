@@ -1,26 +1,38 @@
-"""
-Kalman Filter module
-this module is a kalman filter implementation for a constant velocity model 
-of a robot moving in 2D space with 3 degrees of freedom x, y 
-and rotation around z (theta)
-
-the only available measurement is the robot position in unit timestamp
-"""
-
 import logging as log
 import numpy as np
 
 
 class KalmanFilterCV:
+    """
+    Kalman Filter module
+    this module is a kalman filter implementation for a constant velocity model 
+    of a robot moving in 2D space with 3 degrees of freedom x, y 
+    and rotation around z (theta)
+
+    the only available measurement is the robot position in discrete timestamp
+    """
+
     def __init__(self, state_0, p_diag, q_diag, r_diag, start_time):
-        """ Kalman filter model from initial parameters​        
+        """ Kalman filter model from initial parameters​ 
+
         Args:   
-            state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
-            p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
-            q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
-            r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
+
+            state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, 
+                     velocity-x, velocity-y, velocity-t]
+
+            p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t,
+                    cov-dx, cov-dy, cov-dt]
+
+            q_diag: shape 1x3 matrix of covariance or error in 
+                    system estimate for neglecting higher order 
+                    differentials of taylor series 
+                    (linearisation err.) [cov-x, cov-y, cov-t]
+
+            r_diag: shape 1x3 matrix of measurement covariance (sensor noise)
+                    [cov-x, cov-y, cov-t] 
         
-        measurement noise r_diag is used as default, unless noise estimate is available at update for every point
+        measurement noise r_diag is used as default,
+        unless noise estimate is available at update for new measurement
         """
         # state space model
         self.X = state_0.T  # [x, y, t, x', y', t']
@@ -64,7 +76,7 @@ class KalmanFilterCV:
         self.last_update = start_time
 
     def Q(self, t):
-        ''' compute Q with time interval t '''
+        """ compute Q with time interval t """
         # Q could be a lambda function but this would mean 
         # B will be computed twice B and B.T hence the value is taken once here
         # Then transposed
@@ -75,19 +87,21 @@ class KalmanFilterCV:
         """ State of the kalman filter """
         return (f'Kalman Filter \n' +
                 f'X (State) :\n {self.X} \n\n' +
-                f'A (Dynamics matrix) :\n {self.A(1)} \n\n' +
-                f'P (Noise Covariance matrix):\n {self.P} \n\n' +
-                f'Q (Process Covariance matrix):\n {self.Q(1)} \n\n' +
+                f'A(1) (Dynamics matrix at t=1) :\n {self.A(1)} \n\n' +
+                f'P (Noise covariance matrix):\n {self.P} \n\n' +
+                f'Q(1) (Process noise covariance matrix at t=1):\n {self.Q(1)} \n\n' +
                 f'H (Translation matrix):\n {self.H} \n\n' +
                 f'R (Measurement noise matrix):\n {self.R} \n\n')
     
     def measurement_valid(self, meas):
-        ''' check if a measurement is valid '''
+        """ returns True if meas is not None and if no element is np.nan"""
         return meas is not None and not np.isnan(meas).any()
 
     def predict(self, dt):
-        """ predict step of kalman filter 
+        """ 
+        predict step of kalman filter 
         Args:
+
             dt: time differnce to last update
         """
         ###################prediction stage#############################################
@@ -98,16 +112,21 @@ class KalmanFilterCV:
             # predict the current covariance (system noise only)
             a = self.A(dt)
             self.P = a * self.P * a.T + self.Q(dt)
-            # print('P predicted: \n', self.P)
-        # print('Process Covariance after predict step:\n', self.P)
+            # print('Process Covariance after predict step:\n', self.P)
         return
 
     def update(self, meas, noise=None):
-        ''' update step of kalman filter 
+        """ 
+        update step of kalman filter 
+
         Args:
-            meas: position measurement, array like of dims 1X3 (x, y, t)
-            noise: (optional) measurement covariance of dims 1x3
-        '''
+
+            meas (np.array): shape 1x3 position measurement,
+                             array like of dims 1X3 (x, y, t)
+
+            noise (np.array): (optional) shape 1x3 measurement noise covariance
+                               default r_diag
+        """
 
         # if no measurement input no update step is performed
         if not self.measurement_valid(meas):
@@ -131,10 +150,24 @@ class KalmanFilterCV:
         # update the process covariance
         self.P = (np.identity(6) - K * self.H) * self.P
 
-        return
-
     def step_update(self, meas, time_stamp, noise=None):
-        ''' runs predict step and runs update step if a valid measurement is recieved '''
+        """ 
+        runs predict step and runs update step if a 
+        valid measurement is recieved 
+        
+        Args:
+
+            meas (np.array): shape 1x3 position sensor measurement
+
+            time_stamp (int): sensor measurement time stamp
+
+            noise (np.array): shape 1x3 noise input (optional)
+                              default r_diag
+
+        Returns:
+
+            state matrix (np.array(1x6)): state matrix X
+        """
         
         # keep original noise input if noise not given
         noise = np.diagflat(noise) if noise is not None else None
@@ -152,8 +185,9 @@ class KalmanFilterCV:
         return np.array(self.X).flatten()
 
     def get_state(self):
-        ''' return state as np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
+        """ returns state matrix self.X """
         return np.array(self.X).flatten()
     
     def get_noise(self):
+        """ returns diagonal of system noise matrix self.P """
         return np.diagonal(self.P)

@@ -7,16 +7,20 @@ from scipy.misc import derivative
 
 class PathFunc:
 
-    """ The Path function class that generates the path that the
+    """ 
+    The Path function class that generates the path that the
     robot will follow in space, for a given point in time (t) 
     this function provides the respective x, y and theta value 
     and also the nth derivative using the central difference 
-    formula """
+    formula 
+    """
 
     def __init__(self, coeffs=[25, 0.1, 10, 30]):
         """
         Args:
-            coeffs (list[A, B, C, D]): for y function A * sin( B * x + C ) + D (default=[25, 0.1, 10, 30])
+
+            coeffs (list[A, B, C, D]): for y function A * sin( B * x + C ) + D 
+                                       (default=[25, 0.1, 10, 30])
         """
         self.c = coeffs
 
@@ -39,10 +43,12 @@ class PathFunc:
         return derivative(self.y, t, n=n, dx=dt)
 
     def theta(self, t):
-        """ theta or the heading of the robot at a given time is the
+        """
+        theta or the heading of the robot at a given time is the
         arc_tangent(dy/dx) where dy/dx is the slope of the curve y(x)
         here we take the partial derivative w.r.t. t of each curve x,y
-        to get arctan((dy/dt)/(dx/dt)) """
+        to get arctan((dy/dt)/(dx/dt))
+        """
         return np.arctan2(self.dny_dtn(t, 1), self.dnx_dtn(t, 1))
 
     def dntheta_dtn(self, t, n, dt=1):
@@ -51,22 +57,28 @@ class PathFunc:
 
 
 class PathGen(PathFunc):
-    """ The path generator which provides interface to the
-        path function to generate a continous stream of ideal
-        or noisy data (sensor measurements with gaussian noise) """
+    """
+    The path generator which provides interface to the
+    path function to generate a continous stream of ideal
+    or noisy data (sensor measurements with gaussian noise)
+    """
 
     def __init__(self, coeffs=[25, 0.1, 10, 30],
                  min_t=0, max_t=100, num=20, rand_seed=1168273):
         """
         Args:
+
             coeffs (list[A,B,C,D]): for PathFunc() (default=[25, 0.1, 10, 30])
+
             min_t (int): start time value (default=0)
+
             max_t (int): stop time value (default=100)
+
             num (int): total time values between start and stop (default=20)
         """
         super().__init__(coeffs=coeffs)
         
-        assert max_t > min_t, 'max time should be greater than min time, causality error ;-)'
+        assert max_t > min_t, 'max time should be greater than min time, CAUSALITY ERROR ;-)'
         
         self.min_t = min_t
         self.max_t = max_t
@@ -76,7 +88,9 @@ class PathGen(PathFunc):
 
     def ideal_data(self):
         """ generator for ideal data
-        Returns:
+
+        Yeilds:
+
             np.matrix: [x, y, theta, d2x/d22, d2y/dt2, d2theta/dt2]
         """
         for t in np.linspace(self.min_t,
@@ -93,19 +107,25 @@ class PathGen(PathFunc):
                    missing_pos_data=(),
                    missing_accel_data=()):
         """ generator for noisy data
+
         Args:
+
             dev (list): std deviation of noise to be added
                         to position and orientation in [x,y,theta]
+
             acc_dev (list): std deviation of noise to be added
                             to acceleration in [acc_x, acc_y, acc_theta]
+
             missing_pos_data (tuple): discrete time stamps at which np.nan value's
                                       are returned for position
                                       (simulating missing location sensor data)
+
             missing_acc_data (tuple): discrete time stamps at which np.nan value's
                                       are returned for acceleration
                                       (simulating missing imu data)
         
-        Returns:
+        Yeilds:
+
             tuple: x, y, theta, d2x/d22, d2y/dt2, d2theta/dt2 with noise
         """
 
@@ -131,6 +151,8 @@ class PathGen(PathFunc):
             yield data
 
 def main():
+    """test function for data gen """
+
     total_iters = 100
     animation_interval_ms = 100
 

@@ -25,15 +25,27 @@ class Animator:
                 acc_q_limits=(-1, 101, -0.2,  0.2)):
       """
       Args:
+      
          title (string): Name of the main figure
+
          plt (matplotlib.pyplot): pyplot object from callers scope
+
          total_iters (int): total iterations to simulate
+
          interval_ms (int): animation interval between each frame
+
          ideal_data_f (generator function): for ideal data
+
          meas_data_f (generator function): for measured/noisy data
+
          k_filter (KalmanFilter Object): check models
+
+         filter_type (FilterType(Enum)): enum to specify filter model
+
          start_time (int, default=0): start time of animation
+
          figsize (tuple, default=(20,10)): size of matplotlib figure
+
          axis_limits (tuple): (x_min, x_max, y_min, y_max)
       """
       #set parameters
@@ -114,14 +126,14 @@ class Animator:
    
    def plot_arrow(self, pose, width=0.1,
                   color='black', alpha=0.2):
-       ''' plots arrow and returns the artist object '''
+       """ plots arrow and returns the artist object """
        self.ax1.add_patch(
             self.ax1.arrow(pose[0], pose[1],
                            np.cos(pose[2]), np.sin(pose[2]),
                            width=width, color=color, alpha=alpha))
    
    def set_axis(self, ax, limits, title, x_label, y_label):
-      ''' set axis limits and names '''
+      """ set axis limits and names """
       ax.set_xlim(limits[0], limits[1])
       ax.set_ylim(limits[2], limits[3])
       ax.set_title(title)
@@ -130,7 +142,7 @@ class Animator:
       ax.legend()
    
    def plot_pos_data(self, t):
-      ''' set position state data: x, y, theta '''
+      """ set position state data: x, y, theta """
       # print('frame: ', t)
       # set lines
       self.line_i.set_xdata(self.i_data[:t+1, 0])
@@ -145,7 +157,7 @@ class Animator:
       self.plot_arrow(self.p_data[t, :], alpha=1)
    
    def plot_acc_data(self, t):
-      ''' set the data on acceleration state graphs '''
+      """ set the data on acceleration state graphs """
       # for ideal/measurements acc is on 3,4,5 for x,y,theta
       self.line_iax.set_data(self.t_data[:t+1], self.i_data[:t+1, 3])
       self.line_iay.set_data(self.t_data[:t+1], self.i_data[:t+1, 4])
@@ -202,11 +214,16 @@ class Animator:
    def run(self, save_path=None, get_anim=False):
       """
       displays, saves or returns animation
+
       Args:
+
          get_anim (defalut=False): if True, returns the animation
+
          save_path (default=None): if None shows the animation else saves to 
                                     save_path given get_anim=False
+
       returns:
+
          matplotlib.animation.FuncAnimation or None 
       """
       anim = FuncAnimation(self.fig, self.animate,
@@ -226,13 +243,15 @@ class Animator:
          self.plt.show()
    
    def rmse(self, preds, targets):
-      ''' gets root mean squared error '''
+      """ gets root mean squared error """
       return np.sqrt(np.mean(((preds-targets)**2)))
    
    def error_analysis(self, save_path=None):
       """
       computes the root mean square error between ideal and predicted data
+
       Args:
+
          save_path (string, default=None): if None displays the figure else
                                            saves at save_path
       """ 
@@ -277,7 +296,7 @@ class Animator:
 
 # helper functions
 def plot_data(ax, xyq, label, c=['#a6e4ff', 'grey'], width=0.1):
-    ''' plots x, y and theta '''
+    """ plots x, y and theta """
     x_diff = np.cos(xyq[2])
     y_diff = np.sin(xyq[2])
     ax.arrow(xyq[0], xyq[1], x_diff, y_diff, color=c[1], width=width)
@@ -288,7 +307,7 @@ def plot(ax, ideal, measured, predicted,
          ideal_c=[(0.18, 0.72, 0.21, 0.5), (0.3, 0.3, 0.3, 0.5)],
          meas_c=[(0.24, 0.53, 1.0, 0.5), (0.3, 0.3, 0.3, 0.5)],
          pred_c=['red', (0.1, 0.1, 0.1, 0.8)]):
-         ''' plots x, y, theta for ideal measured and predicted data '''
+         """ plots x, y, theta for ideal measured and predicted data """
          plot_data(ax, ideal, label='ideal', c=ideal_c)
          if(not np.isnan(measured).any()):
             plot_data(ax, measured, label='measured', c=meas_c)
@@ -300,8 +319,10 @@ def plot_acc(ax, time, ideal, measured, predicted,
              ideal_c=[(0.18, 0.72, 0.21, 0.5)],
              meas_c=[(0.24, 0.53, 1.0, 0.5)],
              pred_c='red'):
-             """ plots x, y, theta aceleration for ideal,
-             measured and predicted data """
+             """ 
+             plots x, y, theta aceleration for ideal,
+             measured and predicted data 
+             """
              ax.scatter(time, ideal, c=ideal_c)
              if(not np.isnan(measured).any()):
                 ax.scatter(time, measured, c=meas_c)

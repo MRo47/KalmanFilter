@@ -1,39 +1,51 @@
-"""
-Kalman Filter module
-this module is a kalman filter implementation
-of a robot moving in 2D space with 3 degrees of freedom x, y 
-and rotation around z (theta)
-
-the available measurements are position and imu data (acceleration)
-"""
-
 import numpy as np
 from enum import Enum
 
+# enums to indicate measurement type position or imu
 class MType(Enum):
-    POS = 1
-    IMU = 2
+    POS = 1 #position sensor
+    IMU = 2 #imu
 
 class KalmanFilterFusion:
+    """
+    Kalman Filter module with sensor fusion
+    this module is a kalman filter implementation
+    of a robot moving in 2D space with 3 degrees of freedom x, y 
+    and rotation around z (theta)
+    the model has sensor fusion capabilities with measurements
+    coming from a position sensor (eg. gps) and an IMU (acceleration in x, y 
+    and angular acceleration for rotation around z or theta)
 
-    MType = MType
+    the available measurements are position and imu data (acceleration)
+    """
+
+    MType = MType #declare the enum as static for this class
 
     def __init__(self, state_0, p_diag, q_diag, r_pos, r_imu, start_time):
         """ Kalman filter model from initial parameters​        
         
         Args:   
             
-            state_0: shape 1x6 matrix [pos-x, pos-y, pos-t, velocity-x, velocity-y, velocity-t]
+            state_0 (np.matrix): shape 1x9 matrix [pos-x, pos-y, pos-theta, 
+                                 velocity-x, velocity-y, velocity-theta, 
+                                 accel-x , accel-y, accel-theta]
             
-            accel_0: shape 1x3 matrix [accel-x, accel-y, accel-t]
+            p_diag (np.matrix): shape 1x6 matrix of covariance 
+                                [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
             
-            p_diag: shape 1x6 matrix of covariance [cov-x, cov-y, cov-t, cov-dx, cov-dy, cov-dt]
+            q_diag (np.matrix): shape 1x3 matrix of covariance or error in 
+                                system estimate for neglecting higher order 
+                                differentials of taylor series 
+                                (linearisation err.) [cov-x, cov-y, cov-t]
             
-            q_diag: shape 1x3 matrix of acceleration covariance (approx. estimate) [cov-d2x, cov-d2y, cov-d2t]
+            r_pos (np.matrix): shape 1x3 matrix of position measurement
+                               covariance (sensor noise) [cov-x, cov-y, cov-t]
             
-            r_diag: shape 1x3 matrix of measurement covariance (sensor noise) [cov-x, cov-y, cov-t] 
+            r_imu (np.matrix): shape 1x3 matrix of imu measurement
+                               covariance (sensor noise) [cov-x, cov-y, cov-t]
         
-        measurement noise r_diag is used as default, unless noise estimate is available at update for every point
+        measurement noise values r_pos and r_imu is used as default,
+        unless noise estimate is available at update for every new measurement
         """
         # state space model
         self.X = state_0.T  # [x, y, t, x', y', t']
@@ -76,7 +88,7 @@ class KalmanFilterFusion:
         self.last_update = start_time
 
     def A(self, t):
-        ''' compute A with time interval t '''
+        """ compute A with time interval t """
         t2 = 0.5*t**2
         return np.matrix([[1, 0, 0, t, 0, 0, t2,  0,   0],
                           [0, 1, 0, 0, t, 0, 0,  t2,   0],
@@ -89,7 +101,7 @@ class KalmanFilterFusion:
                           [0, 0, 0, 0, 0, 0, 0,   0,   1]])
     
     def Q(self, t):
-        ''' compute Q with time interval t '''
+        """ compute Q with time interval t """
         B_t = self.B(t)
         return B_t * self.q_diag * B_t.T
     
@@ -97,19 +109,23 @@ class KalmanFilterFusion:
         """ State of the kalman filter """
         return (f'Kalman Filter \n' +
                 f'X (State) :\n {self.X} \n\n' +
-                f'A (Dynamics matrix) :\n {self.A(1)} \n\n' +
-                f'P (Noise Covariance matrix):\n {self.P} \n\n' +
-                f'Q (Process Covariance matrix):\n {self.Q(1)} \n\n' +
+                f'A(1) (Dynamics matrix for t=1) :\n {self.A(1)} \n\n' +
+                f'P (Noise covariance matrix):\n {self.P} \n\n' +
+                f'Q(1) (Process noise covariance matrix for t=1):\n {self.Q(1)} \n\n' +
                 f'H (Translation matrix):\n {self.H_pos} \n\n' +
-                f'R (Measurement noise matrix):\n {self.R_pos} \n\n')
+                f'R_pos (Measurement noise matrix (pos)):\n {self.R_pos} \n\n' +
+                f'R_imu (Measurement noise matrix (imu)):\n {self.R_imu} \n\n')
 
     def measurement_valid(self, meas):
-        ''' check if a measurement is valid '''
+        """ returns True if meas is not None and if no element is np.nan"""
         return meas is not None and not np.isnan(meas).any()
 
     def predict(self, dt):
-        """ predict step of kalman filter 
+        """ 
+        predict step of kalman filter 
+
         Args:
+
             dt: time differnce to last update
         """
         ###################prediction stage#############################################
@@ -119,17 +135,28 @@ class KalmanFilterFusion:
             # print('X predicted: \n', self.X)
             # predict the current covariance (system noise only)
             a = self.A(dt)
-            self.P = a * self.P * a.T + self.Q(dt)
-            # print('P predicted: \n', self.P)        
-        # print('Process Covariance after predict step:\n', self.P)
-        return
+            self.P = a * self.P * a.T + self.Q(dt)       
+            # print('Process Covariance after predict step:\n', self.P)
+
 
     def update(self, m_type, meas, noise=None):
-        ''' update step of kalman filter 
-        args:
-        meas: position measurement, array like of dims 1X3 (x, y, t)
-        r_diag: (optional) measurement covariance of dims 1x3
-        '''
+        """
+        update step of kalman filter 
+
+        Args:
+
+            m_type (MType(Enum)): measurement type POS/IMU
+
+            meas (np.array): shape 1x3 sensor measurement
+
+            noise (np.array): shape 1x3 noise input (optional)
+                              (default self.r_pos/self.r_imu)
+
+        Raises:
+
+            ValueError: Invalid measurement type if
+                        m_type doesnt match MType input
+        """
         
         # if no measurement input no update step is performed
         if not self.measurement_valid(meas):
@@ -138,6 +165,7 @@ class KalmanFilterFusion:
         H = None
         R = None
 
+        #set H and R matrix based on type of sensor measurement
         if m_type == MType.IMU:
             H = self.H_imu
             R = noise if noise is not None else self.R_imu
@@ -163,31 +191,42 @@ class KalmanFilterFusion:
 
         # update the process covariance
         self.P = (np.identity(9) - K * H) * self.P
-        return 
 
     def step_update(self, meas, time_stamp, noise=None):
-        ''' runs predict step and runs update step if a valid measurement is recieved '''
+        """ 
+        runs predict step and runs update step if a 
+        valid measurement is recieved 
+        
+        Args:
+
+            meas (np.array): shape 1x3 sensor measurement
+
+            time_stamp (int): sensor measurement time stamp
+
+            noise (np.array): shape 1x3 noise input (optional)
+                              (default self.r_pos/self.r_imu)
+
+        Returns:
+
+            state matrix (np.array(1x9)): state matrix X
+        """
 
         # keep original noise input if noise not given
         noise = np.diagflat(noise) if noise is not None else None
 
-        # predict new state with time diff
+        ######## predict new state with time diff
         self.predict(time_stamp - self.last_update)
         
-        # update/correct the estimate
+        ######## update/correct the estimate
 
         #update with position
         m_in = np.matrix(meas[:3])
         if self.measurement_valid(m_in):
-            # print('meas: ', m_in)
-            # print('pos update')
             self.update(MType.POS, m_in, noise=noise)
 
         #update with imu
         m_in = np.matrix(meas[3:6])
         if self.measurement_valid(m_in):
-            # print('meas: ', m_in)
-            # print('imu update')
             self.update(MType.IMU, m_in, noise=noise)
 
         #reset timestamp
@@ -196,8 +235,9 @@ class KalmanFilterFusion:
         return np.array(self.X).flatten()
 
     def get_state(self):
-        ''' return box coordinates and velocities np.array([x, y, t, velocity-x, velocity-y, velocity-t])'''
+        """ returns state matrix self.X """
         return np.array(self.X).flatten()
     
     def get_noise(self):
+        """ returns diagonal of system noise matrix self.P """
         return np.diagonal(self.P)
