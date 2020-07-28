@@ -48,12 +48,13 @@ kf = KalmanFilterCV(np.matrix([0, 0, 0, 0, 0, 0]),
 
 anim = Animator('Robot position (Kalman Filter constant velocity model)',
                 plt, total_iters, animation_interval_ms,
-                ideal_data_f, noisy_data_f, kf, start_time=time_lims[0])
+                ideal_data_f, noisy_data_f, kf, Animator.FilterType.CV, 
+                start_time=time_lims[0])
 
-anim.run()
-# anim.run(save_path='images/KF_constant_velocity_anim.gif')
-anim.error_analysis()
-# anim.error_analysis(save_path='images/KF_constant_velocity_err.png')
+# anim.run()
+anim.run(save_path='images/KF_constant_velocity_anim.gif')
+# anim.error_analysis()
+anim.error_analysis(save_path='images/KF_constant_velocity_err.png')
 
 
 
@@ -87,14 +88,15 @@ noisy_data_f = gen.noisy_data(dev=pos_dev, acc_dev=acc_dev,
 kf = KalmanFilterFusion(np.matrix([0, 0, 0, 0, 0, 0, 0, 0, 0]),
                         p_diag, q_diag, pos_dev, acc_dev, time_lims[0])
 
-anim = Animator('Robot position (Kalman Filter DR, with no imu input)',
+anim = Animator('Robot position (Kalman Filter single sensor :- position only)',
                 plt, total_iters, animation_interval_ms,
-                ideal_data_f, noisy_data_f, kf, start_time=time_lims[0])
+                ideal_data_f, noisy_data_f, kf, Animator.FilterType.SF, 
+                start_time=time_lims[0])
 
-anim.run()
-# anim.run(save_path='images/KF_DR_no_acc_anim.gif')
-anim.error_analysis()
-# anim.error_analysis(save_path='images/KF_DR_no_acc_err.png')
+# anim.run()
+anim.run(save_path='images/KF_DR_no_acc_anim.gif')
+# anim.error_analysis()
+anim.error_analysis(save_path='images/KF_DR_no_acc_err.png')
 
 ###################### Kalman Filter DR (IMU input only) ##################
 
@@ -128,12 +130,13 @@ kf = KalmanFilterFusion(np.matrix([0, 0, 0, 0, 0, 0, 0, 0, 0]),
 
 anim = Animator('Robot position (Kalman Filter DR, with no position input)',
                 plt, total_iters, animation_interval_ms,
-                ideal_data_f, noisy_data_f, kf, start_time=time_lims[0])
+                ideal_data_f, noisy_data_f, kf, Animator.FilterType.SF,
+                start_time=time_lims[0])
 
-anim.run()
-# anim.run(save_path='images/KF_DR_no_pos_anim.gif')
-anim.error_analysis()
-# anim.error_analysis(save_path='images/KF_DR_no_pos_err.png')
+# anim.run()
+anim.run(save_path='images/KF_DR_no_pos_anim.gif')
+# anim.error_analysis()
+anim.error_analysis(save_path='images/KF_DR_no_pos_err.png')
 
 
 
@@ -169,12 +172,11 @@ kf = KalmanFilterFusion(np.matrix([0, 0, 0, 0, 0, 0, 0, 0, 0]),
 
 anim = Animator('Robot position (Kalman Filter with sensor fusion gps + imu)',
                 plt, total_iters, animation_interval_ms,
-                ideal_data_f, noisy_data_f, kf, start_time=time_lims[0])
+                ideal_data_f, noisy_data_f, kf, Animator.FilterType.SF, 
+                start_time=time_lims[0])
 
-anim.run()
-# anim.run(save_path='images/KF_fusion_anim.gif')
-anim.error_analysis()
-# anim.error_analysis(save_path='images/KF_fusion_err.png')
+# anim.run()
+anim.run(save_path='images/KF_fusion_anim.gif')
+# anim.error_analysis()
+anim.error_analysis(save_path='images/KF_fusion_err.png')
 
-
-#TODO remove acceleration plot for constant velocity model
