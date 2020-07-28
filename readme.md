@@ -6,7 +6,10 @@ To design a kalman filter for an object moving on a 2D plane with 3 degrees of f
 
 Lets start with some color
 
-## Kalman filter tracking robot position
+#### Kalman filter tracking robot position by fusing imu and position measurements
+<center>
+<img src="images/KF_fusion_anim.gif"/>
+</center>
 
 
 
@@ -31,9 +34,9 @@ the velocity can be estimated as...
 </center>
 
 
-## State space model
+## Dynamic model
 
-The above motion equations can be represented as a state space equation as. Here our system state is the position (x, y, orientation or heading angle 0 if heading parallel to x axis) and velocity (linear along x and y, angular along z)
+The above motion equations can be represented as a dynamic equation as. Here our system state is the position (x, y, orientation or heading angle 0 if heading parallel to x axis) and velocity (linear along x and y, angular along z)
 
 <center>
 
@@ -197,7 +200,7 @@ here we adapt the equations above to model a simple constant velocity model of k
 
 The design method flows as fllows
 
-1. Here the same state space model is used as above (position and velocity)
+1. Here the same dynamic model is used as above (position and velocity)
 
 <center>
    <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;X_{n}&space;=&space;\begin{bmatrix}&space;x_{n}&space;\\&space;y_{n}&space;\\&space;\theta_{n}&space;\\&space;\dot{x}_{n}&space;\\&space;\dot{y}_{n}&space;\\&space;\dot{\theta}_{n}&space;\end{bmatrix}" title="X_{n} = \begin{bmatrix} x_{n} \\ y_{n} \\ \theta_{n} \\ \dot{x}_{n} \\ \dot{y}_{n} \\ \dot{\theta}_{n} \end{bmatrix}" />
@@ -229,12 +232,22 @@ The design method flows as fllows
 
 6. Once the above matrices have been defined the only work that is left is to plug in the values to the kalman filter algorithm. The prediction step is run and correction is performed when a measurement is available.
 
+#### kalman filter (constant velocity model) tracking robot position
+<center>
+<img src="images/KF_constant_velocity_anim.gif"/>
+</center>
+
+#### kalman filter (constant velocity model) plot of variances in x, y and theta
+<center>
+<img src="images/KF_constant_velocity_err.png"/>
+</center>
+
 
 ### Kalman Filter (Sensor fusion)
 
 Here a kalman filter is designed that estimates the system state based on 2 sensor inputs (position sensor eg: gps and an acceleration sensor eg: imu)
 
-1. The state space model here has 3 more states of the robot (acceleration in x, y and theta) as these variables can be updated using the imu.
+1. The dynamic model here has 3 more states of the robot (acceleration in x, y and theta) as these variables can be updated using the imu.
    <center>
     <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;X_{n}&space;=&space;\begin{bmatrix}&space;x_{n}&space;\\&space;y_{n}&space;\\&space;\theta_{n}&space;\\&space;\dot{x}_{n}&space;\\&space;\dot{y}_{n}&space;\\&space;\dot{\theta}_{n}&space;\\&space;\ddot{x}_{n}&space;\\&space;\ddot{y}_{n}&space;\\&space;\ddot{\theta}_{n}&space;\end{bmatrix}" title="X_{n} = \begin{bmatrix} x_{n} \\ y_{n} \\ \theta_{n} \\ \dot{x}_{n} \\ \dot{y}_{n} \\ \dot{\theta}_{n} \\ \ddot{x}_{n} \\ \ddot{y}_{n} \\ \ddot{\theta}_{n} \end{bmatrix}" />
     </center>
@@ -272,3 +285,41 @@ Here a kalman filter is designed that estimates the system state based on 2 sens
    </center>
 
 5. The measurement matrices above <img src="https://render.githubusercontent.com/render/math?math=H_{pos}">, <img src="https://render.githubusercontent.com/render/math?math=R_{pos}"> are used to update the kalman filter when position inputs are avialble to the kalman filter, Matrices <img src="https://render.githubusercontent.com/render/math?math=H_{imu}">, <img src="https://render.githubusercontent.com/render/math?math=R_{imu}"> are used when imu data is available. Given these updates the kalman filter can work asynchronously to update the state when a sensor measurement is available.
+
+#### kalman filter (sensor fusion model) tracking robot position
+<center>
+<img src="images/KF_fusion_anim.gif"/>
+</center>
+
+#### kalman filter (sensor fusion model) plot of variances in x, y and theta
+<center>
+<img src="images/KF_fusion_err.png"/>
+</center>
+
+### Experiments
+
+#### kalman filter (sensor fusion model) tracking robot position with position input only (imu switched off at 20 iterations)
+<center>
+<img src="images/KF_DR_no_acc_anim.gif"/>
+</center>
+
+#### kalman filter (sensor fusion model) plot of variances in x, y and theta
+<center>
+<img src="images/KF_DR_no_acc_err.png"/>
+</center>
+
+#### kalman filter (sensor fusion model) dead reckoning (position sensor switched off at 20 iterations)
+<center>
+<img src="images/KF_DR_no_pos_anim.gif"/>
+</center>
+
+#### kalman filter (sensor fusion model) plot of variances in x, y and theta
+<center>
+<img src="images/KF_DR_no_pos_err.png"/>
+</center>
+
+### Design notes
+
+1. The Q matrix values should be selected as a value between 0 and 1. the values can be tuned looking at system outputs. The general intution for Q is, higher the values the less system will trust its prediction rather tham measurements. Q diagonals cannot be set to 0 as this will imply a perfect system and hence the system will no longer update itself based on measurements.
+2. The R matrix can be experimentally determined by taking a standard deviation of the error between sensor measurements and true values. This requires a true measurement to be avialble of the measured quantity other than the sensor.
+3. Multiple sensors can be fused using the kalman filter given the H and R matrices for those sensors. An update step can be performed when any of the sensor measurements are available. Hence using this design the kalman filter can run at a maximum frequency which is the frequency of the slowest sensor. Although observation of the state can be performed at any time by accessing the state. 
