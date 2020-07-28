@@ -10,7 +10,7 @@ Lets start with some color
 
 
 
-## The motion model
+## Motion modelling
 
 The following [equations of motion](https://en.wikipedia.org/wiki/Equations_of_motion) describe the motion of the object with acceptable accuracy (neglecting the higher order differentials of the approximation like jerk (literally!) i.e. the derivative of acceleration).
 
@@ -53,6 +53,8 @@ where
 
 </center>
 
+matrix <img src="https://render.githubusercontent.com/render/math?math=A"> is the system dynamic matrix that aids to predict the next state of the kalman filter given the current state. matrix <img src="https://render.githubusercontent.com/render/math?math=B"> is the control input model and matrix <img src="https://render.githubusercontent.com/render/math?math=U"> is the control vector. If the system has any control inputs they can be modelled in these matrices to predict the next state and accordingly Q should be updated to include the additional noise input (eg: A gas pedal input could be given as a control input to estimate the acceleration in which case the B matrix remains as is, since acceleration is given as input). 
+
 the <img src="https://render.githubusercontent.com/render/math?math=w"> represents the uncertainity or noise in the estimate of the system state as we exclude the higher order differentials in the system.
 
 ## Process noise
@@ -64,7 +66,7 @@ the process noise <img src="https://render.githubusercontent.com/render/math?mat
 
 </center>
 
-where <img src="https://render.githubusercontent.com/render/math?math=Q_a"> is the unceratainity or noise in the acceleration given as standard deviation of acceleration.
+where <img src="https://render.githubusercontent.com/render/math?math=Q_a"> is the unceratainity or noise in the acceleration given as standard deviation of acceleration, this is the system noise which is responsible for error in the state prediction. The noise arises as a result of linearisation of system model using the taylor series, here we neglect the higher order terms after acceleration ie: jerk and other high order differentials.
 
 <center>
 
@@ -107,7 +109,7 @@ Since there are no perfect measurement devices we have to model the noise in the
 
 <center>
 
-<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;\newline&space;R&space;=&space;HH^TV&space;\\&space;\newline&space;V&space;=&space;\begin{bmatrix}&space;\sigma_{\ddot{x}}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{\ddot{y}}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{\ddot{\theta}}^2&space;\end{bmatrix}&space;\\" title="\large \newline R = HH^TV \\ \newline V = \begin{bmatrix} \sigma_{\ddot{x}}^2 & 0 & 0 \\ 0 & \sigma_{\ddot{y}}^2 & 0 \\ 0 & 0 & \sigma_{\ddot{\theta}}^2 \end{bmatrix} \\" />
+<img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;R&space;=&space;HH^TV&space;\newline&space;\newline&space;V&space;=&space;\begin{bmatrix}&space;\sigma_{x}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{y}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{{\theta}}^2&space;\end{bmatrix}" title="R = HH^TV \newline \newline V = \begin{bmatrix} \sigma_{x}^2 & 0 & 0 \\ 0 & \sigma_{y}^2 & 0 \\ 0 & 0 & \sigma_{{\theta}}^2 \end{bmatrix}" />
 
 </center>
 
@@ -115,7 +117,7 @@ hence in our case
 
 <center>
 
-<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;R&space;=&space;\begin{bmatrix}&space;\sigma_{\ddot{x}}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{\ddot{y}}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{\ddot{\theta}}^2&space;\end{bmatrix}" title="\large R = \begin{bmatrix} \sigma_{\ddot{x}}^2 & 0 & 0 \\ 0 & \sigma_{\ddot{y}}^2 & 0 \\ 0 & 0 & \sigma_{\ddot{\theta}}^2 \end{bmatrix}" />
+<img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;R&space;=&space;\begin{bmatrix}&space;\sigma_{x}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{y}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{{\theta}}^2&space;\end{bmatrix}" title="R = \begin{bmatrix} \sigma_{x}^2 & 0 & 0 \\ 0 & \sigma_{y}^2 & 0 \\ 0 & 0 & \sigma_{{\theta}}^2 \end{bmatrix}" />
 
 </center>
 
@@ -123,7 +125,7 @@ hence in our case
 
 Now that we have modelled our system as well as the measurements coming into it we are ready to plug in our values into the kalman filter.
 
-The algorithm consists of 2 main steps:
+The algorithm consists of 2 main steps: Prediction and Update
 
 ### Prediction step
 
@@ -185,3 +187,88 @@ OR
 
 </center>
 
+## Designing Kalman Filters
+
+Designing an application specific kalman filter involves defining the correct matrices based on the chosen state model and measurement (sensors). A good sensor noise model would yeild an accurate filter. 
+
+### Kalman Filter (Constant velocity model)
+
+here we adapt the equations above to model a simple constant velocity model of kalman filter where we neglect acceleration and higher order terms for linearising the system. This filter although very simple would suffice for linear motion as we assume constant velocity motion of a robot. The only measurement given here will be from a position sensor that has some degree of inaccuracy.
+
+The design method flows as fllows
+
+1. Here the same state space model is used as above (position and velocity)
+
+<center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;X_{n}&space;=&space;\begin{bmatrix}&space;x_{n}&space;\\&space;y_{n}&space;\\&space;\theta_{n}&space;\\&space;\dot{x}_{n}&space;\\&space;\dot{y}_{n}&space;\\&space;\dot{\theta}_{n}&space;\end{bmatrix}" title="X_{n} = \begin{bmatrix} x_{n} \\ y_{n} \\ \theta_{n} \\ \dot{x}_{n} \\ \dot{y}_{n} \\ \dot{\theta}_{n} \end{bmatrix}" />
+</center>
+
+2. Matrix <img src="https://render.githubusercontent.com/render/math?math=A"> remains the same, matrix <img src="https://render.githubusercontent.com/render/math?math=B"> is not used for prediction since we provide no control input matrix <img src="https://render.githubusercontent.com/render/math?math=U">
+
+<center>
+   <img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;A&space;=&space;\begin{bmatrix}&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;\end{bmatrix}&space;\text{&space;}&space;B&space;=&space;\begin{bmatrix}&space;\frac{t^2}{2}&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\frac{t^2}{2}&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\frac{t^2}{2}&space;\\&space;t&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;t&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;t&space;\end{bmatrix}" title="\large A = \begin{bmatrix} 1 & 0 & 0 & t & 0 & 0 \\ 0 & 1 & 0 & 0 & t & 0 \\ 0 & 0 & 1 & 0 & 0 & t \\ 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 0 & 1 \end{bmatrix} \text{ } B = \begin{bmatrix} \frac{t^2}{2} & 0 & 0 \\ 0 & \frac{t^2}{2} & 0 \\ 0 & 0 & \frac{t^2}{2} \\ t & 0 & 0 \\ 0 & t & 0 \\ 0 & 0 & t \end{bmatrix}" />
+</center>
+
+3. Process noise matrix <img src="https://render.githubusercontent.com/render/math?math=Q"> in this case will be due to neglecting acceleration and higher order differentials. It remains the same as above.
+
+<center>
+<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;Q_a&space;=&space;\begin{bmatrix}&space;\sigma_{\ddot{x}}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{\ddot{y}}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{\ddot{\theta}}^2&space;\end{bmatrix}" title="\large Q_a = \begin{bmatrix} \sigma_{\ddot{x}}^2 & 0 & 0 \\ 0 & \sigma_{\ddot{y}}^2 & 0 \\ 0 & 0 & \sigma_{\ddot{\theta}}^2 \end{bmatrix}" />
+</center>
+
+4. Measurement model needs matrix <img src="https://render.githubusercontent.com/render/math?math=H"> which remains the same as above since we have 6 state variables but we measure only 3 variables hence the shape 3x6
+
+<center>
+<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;H&space;=&space;\begin{bmatrix}&space;1&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0\\&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0\\&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;0&space;\end{bmatrix}" title="\large H = \begin{bmatrix} 1 & 0 & 0 & 0 & 0 & 0\\ 0 & 1 & 0 & 0 & 0 & 0\\ 0 & 0 & 1 & 0 & 0 & 0 \end{bmatrix}" />
+</center>
+
+5. The measurement noise input to the system will be from the position sensor and is modelled as.
+
+<center>
+<img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;R&space;=&space;\begin{bmatrix}&space;\sigma_{x}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{y}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{{\theta}}^2&space;\end{bmatrix}" title="R = \begin{bmatrix} \sigma_{x}^2 & 0 & 0 \\ 0 & \sigma_{y}^2 & 0 \\ 0 & 0 & \sigma_{{\theta}}^2 \end{bmatrix}" />
+</center>
+
+6. Once the above matrices have been defined the only work that is left is to plug in the values to the kalman filter algorithm. The prediction step is run and correction is performed when a measurement is available.
+
+
+### Kalman Filter (Sensor fusion)
+
+Here a kalman filter is designed that estimates the system state based on 2 sensor inputs (position sensor eg: gps and an acceleration sensor eg: imu)
+
+1. The state space model here has 3 more states of the robot (acceleration in x, y and theta) as these variables can be updated using the imu.
+   <center>
+    <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;X_{n}&space;=&space;\begin{bmatrix}&space;x_{n}&space;\\&space;y_{n}&space;\\&space;\theta_{n}&space;\\&space;\dot{x}_{n}&space;\\&space;\dot{y}_{n}&space;\\&space;\dot{\theta}_{n}&space;\\&space;\ddot{x}_{n}&space;\\&space;\ddot{y}_{n}&space;\\&space;\ddot{\theta}_{n}&space;\end{bmatrix}" title="X_{n} = \begin{bmatrix} x_{n} \\ y_{n} \\ \theta_{n} \\ \dot{x}_{n} \\ \dot{y}_{n} \\ \dot{\theta}_{n} \\ \ddot{x}_{n} \\ \ddot{y}_{n} \\ \ddot{\theta}_{n} \end{bmatrix}" />
+    </center>
+
+2. Matrix <img src="https://render.githubusercontent.com/render/math?math=A"> now has the terms for acceleration from equations of motion, matrix <img src="https://render.githubusercontent.com/render/math?math=B"> has terms for jerk (the differential of acceleration, check taylor series expansion) in this model but is not used for prediction since we provide no control input matrix <img src="https://render.githubusercontent.com/render/math?math=U">. <img src="https://render.githubusercontent.com/render/math?math=B"> will only be used to compute <img src="https://render.githubusercontent.com/render/math?math=Q"> matrix.
+   <center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;A&space;=&space;\begin{bmatrix}&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;&&space;0&space;&&space;\frac{t^2}{2}&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;&&space;0&space;&&space;\frac{t^2}{2}&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;&&space;0&space;&&space;\frac{t^2}{2}&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;t&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;\\&space;\end{bmatrix}&space;\text{&space;}&space;B&space;=&space;\begin{bmatrix}&space;\frac{t^3}{6}&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\frac{t^3}{6}&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\frac{t^3}{6}&space;\\&space;\frac{t^2}{2}&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\frac{t^2}{2}&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\frac{t^2}{2}&space;\\&space;t&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;t&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;t&space;\end{bmatrix}" title="A = \begin{bmatrix} 1 & 0 & 0 & t & 0 & 0 & \frac{t^2}{2} & 0 & 0 \\ 0 & 1 & 0 & 0 & t & 0 & 0 & \frac{t^2}{2} & 0 \\ 0 & 0 & 1 & 0 & 0 & t & 0 & 0 & \frac{t^2}{2} \\ 0 & 0 & 0 & 1 & 0 & 0 & t & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 & 0 & 0 & t & 0 \\ 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & t \\ 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ \end{bmatrix} \text{ } B = \begin{bmatrix} \frac{t^3}{6} & 0 & 0 \\ 0 & \frac{t^3}{6} & 0 \\ 0 & 0 & \frac{t^3}{6} \\ \frac{t^2}{2} & 0 & 0 \\ 0 & \frac{t^2}{2} & 0 \\ 0 & 0 & \frac{t^2}{2} \\ t & 0 & 0 \\ 0 & t & 0 \\ 0 & 0 & t \end{bmatrix}" />
+   </center>
+
+3. Process noise matrix <img src="https://render.githubusercontent.com/render/math?math=Q"> in this case will be due to neglecting jerk and other higher order differentials. hence it is given as with the diagonal terms accounting for noise in x, y and theta. The values of diagonals are selected as small values in range 0 to 1.
+   <center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;Q_a&space;=&space;\begin{bmatrix}&space;\sigma_{\dddot{x}}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{\dddot{y}}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{\dddot{\theta}}^2&space;\end{bmatrix}" title="Q_a = \begin{bmatrix} \sigma_{\dddot{x}}^2 & 0 & 0 \\ 0 & \sigma_{\dddot{y}}^2 & 0 \\ 0 & 0 & \sigma_{\dddot{\theta}}^2 \end{bmatrix}" />
+   </center>
+
+4. Measurement model in this case has 2 sensors which perform the updates 
+   
+   i) Position sensor model: needs matrix <img src="https://render.githubusercontent.com/render/math?math=H_{pos}"> which has dimensions 3x9 since 3 variables are measured (x, y and theta) and the state has 9 variables.
+   <center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;H_{pos}&space;=&space;\begin{bmatrix}&space;1&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;\\&space;\end{bmatrix}" title="H_{pos} = \begin{bmatrix} 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ \end{bmatrix}" />
+   </center>
+
+   The noise model for position sensor is given as
+   <center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;R_{pos}&space;=&space;\begin{bmatrix}&space;\sigma_{x}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{y}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{{\theta}}^2&space;\end{bmatrix}" title="R_{pos} = \begin{bmatrix} \sigma_{x}^2 & 0 & 0 \\ 0 & \sigma_{y}^2 & 0 \\ 0 & 0 & \sigma_{{\theta}}^2 \end{bmatrix}" />
+   </center>
+
+   ii) IMU sensor model: needs matrix <img src="https://render.githubusercontent.com/render/math?math=H_{imu}"> which has dimensions 3x9 since 3 variables are measured, acceleration in x, y and theta and the state has 9 variables.
+   <center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;H_{imu}&space;=&space;\begin{bmatrix}&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;0&space;&&space;1&space;\\&space;\end{bmatrix}" title="H_{imu} = \begin{bmatrix} 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ \end{bmatrix}" />
+   </center>
+
+   The noise model for IMU is given as
+   <center>
+   <img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;R_{imu}&space;=&space;\begin{bmatrix}&space;\sigma_{\ddot{x}}^2&space;&&space;0&space;&&space;0&space;\\&space;0&space;&&space;\sigma_{\ddot{y}}^2&space;&&space;0&space;\\&space;0&space;&&space;0&space;&&space;\sigma_{\ddot{\theta}}^2&space;\end{bmatrix}" title="R_{imu} = \begin{bmatrix} \sigma_{\ddot{x}}^2 & 0 & 0 \\ 0 & \sigma_{\ddot{y}}^2 & 0 \\ 0 & 0 & \sigma_{\ddot{\theta}}^2 \end{bmatrix}" />
+   </center>
+
+5. The measurement matrices above <img src="https://render.githubusercontent.com/render/math?math=H_{pos}">, <img src="https://render.githubusercontent.com/render/math?math=R_{pos}"> are used to update the kalman filter when position inputs are avialble to the kalman filter, Matrices <img src="https://render.githubusercontent.com/render/math?math=H_{imu}">, <img src="https://render.githubusercontent.com/render/math?math=R_{imu}"> are used when imu data is available. Given these updates the kalman filter can work asynchronously to update the state when a sensor measurement is available.
