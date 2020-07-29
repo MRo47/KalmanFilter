@@ -146,15 +146,15 @@ Now we calculate the kalman gain <img src="https://render.githubusercontent.com/
 
 <center>
 
-<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;$K&space;=&space;\frac{P_tH}{HP_tH&plus;R}$" title="\large $K = \frac{P_tH}{HP_tH+R}$" />
+<img src="https://latex.codecogs.com/png.latex?\dpi{150}&space;K&space;=&space;\frac{P_tH^T}{HP_tH^T&plus;R}" title="K = \frac{P_tH^T}{HP_tH^T+R}" />
 
 </center>
 
-The denominator for this equation <img src="https://latex.codecogs.com/gif.latex?HP_tH&plus;R" title="HP_tH+R" /> is also known as the innovation and is denoted as <img src="https://render.githubusercontent.com/render/math?math=I"> hence the equation can be written as.
+The denominator for this equation <img src="https://latex.codecogs.com/png.latex?HP_tH^T&plus;R" title="HP_tH^T+R" /> is also known as the innovation and is denoted as <img src="https://render.githubusercontent.com/render/math?math=I"> hence the equation can be written as.
 
 <center>
   
-<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;\newline&space;K&space;=&space;P_tHI^{-1}&space;\\&space;\newline&space;I&space;=&space;HP_tH&plus;R&space;\\" title="\large \newline K = P_tHI^{-1} \\ \newline I = HP_tH+R \\" />
+<img src="https://latex.codecogs.com/png.latex?\inline&space;\dpi{150}&space;\large&space;\newline&space;K&space;=&space;P_tH^TI^{-1}&space;\\&space;\newline&space;I&space;=&space;HP_tH^T&plus;R&space;\\" title="\large \newline K = P_tH^TI^{-1} \\ \newline I = HP_tH^T+R \\" />
 
 </center>
 
@@ -320,6 +320,6 @@ Here a kalman filter is designed that estimates the system state based on 2 sens
 
 ### Design notes
 
-1. The Q matrix values should be selected as a value between 0 and 1. the values can be tuned looking at system outputs. The general intution for Q is, higher the values the less system will trust its prediction rather tham measurements. Q diagonals cannot be set to 0 as this will imply a perfect system and hence the system will no longer update itself based on measurements.
-2. The R matrix can be experimentally determined by taking a standard deviation of the error between sensor measurements and true values. This requires a true measurement to be avialble of the measured quantity other than the sensor.
-3. Multiple sensors can be fused using the kalman filter given the H and R matrices for those sensors. An update step can be performed when any of the sensor measurements are available. Hence using this design the kalman filter can run at a maximum frequency which is the frequency of the slowest sensor. Although observation of the state can be performed at any time by accessing the state. 
+1. The Q matrix values should be selected as a value between 0 and 1. the values can be tuned looking at system outputs. The general intution for Q is, higher the values the less system will trust its prediction as compared to measurements. Q diagonals cannot be set to 0 as this will imply a perfect system giving kalman gain 0 and hence the system will no longer update itself based on measurements rather trust its predictions fully.
+2. The R matrix can be experimentally determined by taking a standard deviation of the error between sensor measurements and true values. This requires a true measurement to be avialble of the measured quantity, apart from what is measured by the sensor.
+3. Multiple sensors can be fused using the kalman filter given the H and R matrices for those sensors. An update step can be performed when any of the sensor measurements are available. Hence using this design the kalman filter can run at a maximum frequency which is the frequency of the slowest sensor.
