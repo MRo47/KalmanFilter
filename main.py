@@ -151,7 +151,7 @@ gen = dg.PathGen(coeffs=[25, 0.1, 10, 30],
 # missing position data (eg: gps)
 missing_pos_data = (10, 11, 12, 30, 31, 32, 33, 34, 50, 51, 52)
 # missing IMU data
-missing_accel_data = () #(20, 21, 22, 30, 31, 33, 34)
+missing_accel_data = (20, 21, 22, 30, 31, 33, 34)
 
 # gen function for ideal data
 ideal_data_f = gen.ideal_data()
