@@ -5,6 +5,9 @@ A 2D kalman filter tutorial for self<sub>t+dt</sub> and any explorer from space 
 
 To design a kalman filter for an object moving on a 2D plane with 3 degrees of freedom (traslation in x, traslation in y and rotation along z or yaw).
 
+## Lite version
+No jupyter notebook outputs at: https://github.com/MRo47/KalmanFilter/tree/lite
+
 ## Tutorial
 
 find tutorial at https://mro47.github.io/portfolio/work-kalman-filter.html
