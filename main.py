@@ -51,10 +51,10 @@ anim = Animator('Robot position (Kalman Filter constant velocity model)',
                 ideal_data_f, noisy_data_f, kf, Animator.FilterType.CV, 
                 start_time=time_lims[0])
 
-# anim.run()
-anim.run(save_path='images/KF_constant_velocity_anim.gif')
-# anim.error_analysis()
-anim.error_analysis(save_path='images/KF_constant_velocity_err.png')
+anim.run()
+# anim.run(save_path='images/KF_constant_velocity_anim.gif')
+anim.error_analysis()
+# anim.error_analysis(save_path='images/KF_constant_velocity_err.png')
 
 
 
@@ -93,10 +93,10 @@ anim = Animator('Robot position (Kalman Filter single sensor :- position only)',
                 ideal_data_f, noisy_data_f, kf, Animator.FilterType.SF, 
                 start_time=time_lims[0])
 
-# anim.run()
-anim.run(save_path='images/KF_DR_no_acc_anim.gif')
-# anim.error_analysis()
-anim.error_analysis(save_path='images/KF_DR_no_acc_err.png')
+anim.run()
+# anim.run(save_path='images/KF_DR_no_acc_anim.gif')
+anim.error_analysis()
+# anim.error_analysis(save_path='images/KF_DR_no_acc_err.png')
 
 ###################### Kalman Filter DR (IMU input only) ##################
 
@@ -133,10 +133,10 @@ anim = Animator('Robot position (Kalman Filter DR, with no position input)',
                 ideal_data_f, noisy_data_f, kf, Animator.FilterType.SF,
                 start_time=time_lims[0])
 
-# anim.run()
-anim.run(save_path='images/KF_DR_no_pos_anim.gif')
-# anim.error_analysis()
-anim.error_analysis(save_path='images/KF_DR_no_pos_err.png')
+anim.run()
+# anim.run(save_path='images/KF_DR_no_pos_anim.gif')
+anim.error_analysis()
+# anim.error_analysis(save_path='images/KF_DR_no_pos_err.png')
 
 
 
@@ -175,8 +175,8 @@ anim = Animator('Robot position (Kalman Filter with sensor fusion gps + imu)',
                 ideal_data_f, noisy_data_f, kf, Animator.FilterType.SF, 
                 start_time=time_lims[0])
 
-# anim.run()
-anim.run(save_path='images/KF_fusion_anim.gif')
-# anim.error_analysis()
-anim.error_analysis(save_path='images/KF_fusion_err.png')
+anim.run()
+# anim.run(save_path='images/KF_fusion_anim.gif')
+anim.error_analysis()
+# anim.error_analysis(save_path='images/KF_fusion_err.png')
 
